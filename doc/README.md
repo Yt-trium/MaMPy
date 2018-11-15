@@ -7,4 +7,11 @@
 
 * [Sujet du projet](FR_SUJET.pdf)
 
+
+### Interesting open source projects
+
 * [LibTIM](https://github.com/bnaegel/libtim)
+
+* [Python Morphology Toolbox](https://github.com/luispedro/pymorph)
+
+* [maxtree](https://github.com/gueguenster/maxtree)
