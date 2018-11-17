@@ -1,10 +1,10 @@
 import numpy as np
 
 import scipy as scp
-import scipy.misc
+from scipy.misc import imread
 
 def image_read(filename):
-    return (scp.misc.imread(name=filename, flatten=True, mode="L")).astype(dtype=np.uint8)
+    return (imread(name=filename, flatten=True, mode="L")).astype(dtype=np.uint8)
 
 if __name__ == '__main__':
     img1 = image_read(filename="examples/images/cameraman.jpg")
