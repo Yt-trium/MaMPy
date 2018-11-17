@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 import numpy as np
 
 import scipy as scp
@@ -15,3 +17,7 @@ if __name__ == '__main__':
     print(type(img1[0][0]))
     print(img1.max())
     print(img1.min())
+
+    plt.imshow(imread(name="examples/images/cameraman.jpg", flatten=True, mode="L"), cmap="gray")
+    plt.show()
+
