@@ -50,6 +50,8 @@ def maxtree_berger(image):
     nodes = np.arange(resolution, dtype=np.uint32)
     # TODO: sort using pixel values
 
+    nodes = flatten_image.argsort()
+
     print(nodes)
 
 
