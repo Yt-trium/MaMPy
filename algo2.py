@@ -38,7 +38,61 @@ def canonize(image, parents, nodes_order):
         if image[root] == image[parents[root]]:
             parents[pi] = parents[root]
 
-def maxtree_berger(image):
+def get_4_neighbors(width, height, resolution, pi, pixel_row):
+    """
+    For a given image width, height and pixel index, return the index
+    of direct neighbor pixels using 4 connection.
+    """
+
+    top_pi = pi - width 
+    bottom_pi = pi + width
+    left_pi = pi - 1
+    right_pi = pi + 1
+
+    neighbors = []
+
+    if top_pi >= 0:
+        neighbors.append(top_pi)
+    if bottom_pi < resolution:
+        neighbors.append(bottom_pi) 
+
+    # For right and left pixels, we need to check if we moved to 
+    # the next row or not.
+    if left_pi % width == pixel_row:
+        neighbors.append(left_pi) 
+    if right_pi % width == pixel_row:
+        neighbors.append(right_pi)
+
+    return neighbors
+
+def get_8_neighbors(width, height, resolution, pi, pixel_row):
+    """
+    For a given image width, height and pixel index, return the index
+    of direct neighbor pixels using 8 connection.
+    """
+
+    neighbors = get_4_neighbors(width, height, resolution, pi, pixel_row)
+
+    top_left_pi = pi - width  - 1
+    top_right_pi = top_left_pi + 2
+    bottom_left_pi = pi + width - 1
+    bottom_right_pi = bottom_left_pi + 2
+
+    if top_left_pi >= 0 and (top_left_pi % width) == pixel_row - 1:
+        neighbors.append(top_left_pi)
+
+    if top_right_pi >= 0 and (top_right_pi % width) == pixel_row - 1:
+        neighbors.append(top_right_pi)
+
+    if bottom_left_pi < resolution and (bottom_left_pi % width) == pixel_row + 1:
+        neighbors.append(bottom_left_pi)
+
+    if bottom_right_pi < resolution and (bottom_right_pi % width) == pixel_row + 1:
+        neighbors.append(bottom_right_pi)
+
+    return neighbors
+
+def maxtree_berger(image, connection8=True):
     """
     Union-find based max-tree algorithm as proposed by Berger et al.
 
@@ -82,28 +136,11 @@ def maxtree_berger(image):
         # Find the row of this pixel.
         pixel_row = pi % width;
 
-        # We need to go through neighbors that already have 
-        # a parent.
-        # TODO: support 8-connectivity.
-
-        top_pi = pi - width 
-        bottom_pi = pi + width
-        left_pi = pi - 1
-        right_pi = pi + 1
-
-        neighbors = []
-
-        if top_pi >= 0:
-            neighbors.append(top_pi)
-        if bottom_pi < resolution:
-            neighbors.append(bottom_pi) 
-
-        # For right and left pixels, we need to check if we moved to 
-        # the next row or not.
-        if left_pi % width == pixel_row:
-            neighbors.append(left_pi) 
-        if right_pi % width == pixel_row:
-            neighbors.append(right_pi)
+        # We need to go through neighbors that already have a parent.
+        if connection8:
+            neighbors = get_8_neighbors(width, height, resolution, pi, pixel_row)
+        else:
+            neighbors = get_4_neighbors(width, height, resolution, pi, pixel_row)
 
         # Filter neighbors.
         neighbors = [n for n in neighbors if parents[n] != undefined_node]
