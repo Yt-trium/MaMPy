@@ -117,8 +117,15 @@ def maxtree_berger(image):
 
     canonize(flatten_image, parents, sorted_pixels)
 
+    parents = np.reshape(parents, image.shape)
     return (parents, sorted_pixels)
 
 if __name__ == '__main__':
     img1 = maxtree.image_read(filename="examples/images/cameraman.jpg")
-    maxtree_berger(img1)
+    result = maxtree_berger(img1)
+
+    print(result[0].shape)
+    print(result[1].shape)
+    print(result[0])
+    print(result[1])
+
