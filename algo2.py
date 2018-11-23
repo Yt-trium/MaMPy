@@ -17,6 +17,7 @@ def find_pixel_parent(parents, index):
     returns the id of its parent id.
 
     The parent is also named as root.
+    A pixel is the root of itself if parents[index] == index.
     """
 
     root = parents[index]
@@ -24,8 +25,9 @@ def find_pixel_parent(parents, index):
     # Assign the root of the given pixel to the root of its parent.
     if (root != index):
         parents[index] = find_pixel_parent(parents, root)
-
-    return parents[index]
+        return parents[index]
+    else:
+        return root
 
 def canonize(image, parents, nodes_order):
     """
