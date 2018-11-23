@@ -121,7 +121,7 @@ def maxtree_berger(image, connection8=True):
     # We store in the parent node of each pixel in an image.
     # To do so we use the index of the pixel (x + y * width).
     parents = np.full(
-        shape=(resolution, 1), 
+        resolution, 
         fill_value=undefined_node, 
         dtype=np.uint32)
 
@@ -155,8 +155,8 @@ def maxtree_berger(image, connection8=True):
                 zparents[nei_root] = parents[nei_root] = pi
 
     canonize(flatten_image, parents, sorted_pixels)
-
     parents = np.reshape(parents, image.shape)
+    
     return (parents, sorted_pixels)
 
 if __name__ == '__main__':
