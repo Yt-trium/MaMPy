@@ -2,12 +2,71 @@ import matplotlib.pyplot as plt
 import numpy as np
 import imageio
 
-# read an image as a 2D array of 8 bit integer (grayscale)
+'''
+  * read an image as a 2D array of 8 bit integer (grayscale)
+'''
 def image_read(filename):
     return imageio.imread(uri=filename, as_gray=True).astype(dtype=np.uint8)
 
+'''
+  * return the max tree of an given 2D image
+'''
+def maxtree(image):
+    return 0
 
 if __name__ == '__main__':
+    '''
+    image test 1
+    
+    [110,  90, 100]
+    [ 50,  50,  50]
+    [ 40,  20,  50]
+    [ 50,  50,  50]
+    [120,  70,  80]
+    
+            20
+            |
+            40
+            |
+            50
+         /      \
+       90        70
+      /  \      /  \
+    110  100  120  80
+    
+    '''
+    img_test_1 = np.array([[110, 90, 100], [50, 50, 50], [40, 20, 50], [50, 50, 50], [120, 70, 80]], dtype=np.uint8)
+
+    print(img_test_1)
+    print(img_test_1.shape)
+    print(type(img_test_1))
+    print(type(img_test_1[0][0]))
+    print(img_test_1.max())
+    print(img_test_1.min())
+
+    plt.imshow(img_test_1, cmap="gray")
+    plt.show()
+
+    '''
+    image test 2
+
+    [15, 13, 16]
+    [12, 12, 10]
+    [16, 12, 14]
+    '''
+    img_test_2 = np.array([[15, 13, 16], [12, 12, 10], [16, 12, 14]],dtype=np.uint8)
+
+    print(img_test_2)
+    print(img_test_2.shape)
+    print(type(img_test_2))
+    print(type(img_test_2[0][0]))
+    print(img_test_2.max())
+    print(img_test_2.min())
+
+    plt.imshow(img_test_2, cmap="gray")
+    plt.show()
+
+    '''
     img1 = image_read(filename="examples/images/cameraman.jpg")
 
     print(img1)
@@ -32,3 +91,4 @@ if __name__ == '__main__':
 
     plt.imshow(img2, cmap="gray")
     plt.show()
+    '''
