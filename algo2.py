@@ -7,9 +7,8 @@ Reference:
 """
 
 import numpy as np
-import scipy as scp
-import scipy.misc
-import maxtree 
+import math
+
 
 def find_pixel_parent(parents, index):
     """
@@ -23,11 +22,12 @@ def find_pixel_parent(parents, index):
     root = parents[index]
 
     # Assign the root of the given pixel to the root of its parent.
-    if (root != index):
+    if root != index:
         parents[index] = find_pixel_parent(parents, root)
         return parents[index]
     else:
         return root
+
 
 def canonize(image, parents, nodes_order):
     """
@@ -39,6 +39,7 @@ def canonize(image, parents, nodes_order):
 
         if image[root] == image[parents[root]]:
             parents[pi] = parents[root]
+
 
 def get_4_neighbors(width, height, resolution, pi, pixel_row):
     """
@@ -60,12 +61,13 @@ def get_4_neighbors(width, height, resolution, pi, pixel_row):
 
     # For right and left pixels, we need to check if we moved to 
     # the next row or not.
-    if left_pi % width == pixel_row:
+    if math.floor(left_pi / width) == pixel_row:
         neighbors.append(left_pi) 
-    if right_pi % width == pixel_row:
+    if math.floor(right_pi / width) == pixel_row:
         neighbors.append(right_pi)
 
     return neighbors
+
 
 def get_8_neighbors(width, height, resolution, pi, pixel_row):
     """
@@ -80,23 +82,26 @@ def get_8_neighbors(width, height, resolution, pi, pixel_row):
     bottom_left_pi = pi + width - 1
     bottom_right_pi = bottom_left_pi + 2
 
-    if top_left_pi >= 0 and (top_left_pi % width) == pixel_row - 1:
+    if top_left_pi >= 0 and math.floor(top_left_pi / width) == pixel_row - 1:
         neighbors.append(top_left_pi)
 
-    if top_right_pi >= 0 and (top_right_pi % width) == pixel_row - 1:
+    if top_right_pi >= 0 and math.floor(top_right_pi / width) == pixel_row - 1:
         neighbors.append(top_right_pi)
 
-    if bottom_left_pi < resolution and (bottom_left_pi % width) == pixel_row + 1:
+    if bottom_left_pi < resolution and math.floor(bottom_left_pi / width) == pixel_row + 1:
         neighbors.append(bottom_left_pi)
 
-    if bottom_right_pi < resolution and (bottom_right_pi % width) == pixel_row + 1:
+    if bottom_right_pi < resolution and math.floor(bottom_right_pi / width) == pixel_row + 1:
         neighbors.append(bottom_right_pi)
 
     return neighbors
 
+
 def maxtree_berger(image, connection8=True):
     """
     Union-find based max-tree algorithm as proposed by Berger et al.
+
+    -> Algorithm 2 in the paper.
 
     Arguments:
     image is supposed to be a numpy array.
@@ -136,7 +141,7 @@ def maxtree_berger(image, connection8=True):
         zparents[pi] = pi
 
         # Find the row of this pixel.
-        pixel_row = pi % width;
+        pixel_row = math.floor(pi / width)
 
         # We need to go through neighbors that already have a parent.
         if connection8:
@@ -152,19 +157,186 @@ def maxtree_berger(image, connection8=True):
             nei_root = find_pixel_parent(zparents, nei_pi)
 
             if nei_root != pi:
-                zparents[nei_root] = parents[nei_root] = pi
+                zparents[nei_root] = pi
+                parents[nei_root] = pi
 
     canonize(flatten_image, parents, sorted_pixels)
     parents = np.reshape(parents, image.shape)
-    
-    return (parents, sorted_pixels)
 
-if __name__ == '__main__':
-    img1 = maxtree.image_read(filename="examples/images/cameraman.jpg")
-    result = maxtree_berger(img1)
+    return parents, sorted_pixels
 
-    print(result[0].shape)
-    print(result[1].shape)
-    print(result[0])
-    print(result[1])
+
+def maxtree_berger_rank(image, connection8=True):
+    """
+    Union-find with union-by-rank based max-tree algorithm .
+
+    -> Algorithm 3 in the paper.
+
+    Arguments:
+    image is supposed to be a numpy array.
+
+    Returns:
+    """
+
+    (width, height) = (image.shape[0], image.shape[1])
+
+    flatten_image = image.flatten()
+    resolution = flatten_image.shape[0]
+
+    # Unique value telling if a pixel is defined in the max tree or not.
+    undefined_node = resolution + 2
+
+    # We generate an extra vector of pixels that order nodes downard.
+    # This vector allow to traverse the tree both upward and downard
+    # without having to sort childrens of each node.
+    # Initially, we sort pixel by increasing value and add indices in it.
+    sorted_pixels = flatten_image.argsort()
+
+    # We store in the parent node of each pixel in an image.
+    # To do so we use the index of the pixel (x + y * width).
+    parents = np.full(
+        resolution,
+        fill_value=undefined_node,
+        dtype=np.uint32)
+
+    ranks = np.full(
+        resolution,
+        fill_value=0,
+        dtype=np.uint32)
+
+    reprs = np.full(
+        resolution,
+        fill_value=0,
+        dtype=np.uint32)
+
+    # zparents make root finding much faster.
+    zparents = parents.copy()
+
+    # We go through sorted pixels in the reverse order.
+    for pi in reversed(sorted_pixels):
+        # Make a node.
+        # By default, a pixel is its own parent.
+        parents[pi] = pi
+        zparents[pi] = pi
+        ranks[pi] = 0
+        reprs[pi] = 0
+
+        zp = pi
+
+        # Find the row of this pixel.
+        pixel_row = math.floor(pi / width)
+
+        # We need to go through neighbors that already have a parent.
+        if connection8:
+            neighbors = get_8_neighbors(width, height, resolution, pi, pixel_row)
+        else:
+            neighbors = get_4_neighbors(width, height, resolution, pi, pixel_row)
+
+        # Filter neighbors.
+        neighbors = [n for n in neighbors if parents[n] != undefined_node]
+
+        # Go through neighbors.
+        for nei_pi in neighbors:
+            zn = find_pixel_parent(zparents, nei_pi)
+
+            if zn != zp:
+                parents[reprs[zn]] = pi
+
+                if ranks[zp] < ranks[zn]:
+                    # Swap them.
+                    zp, zn = zn, zp
+
+                # Merge sets.
+                zparents[zn] = zp
+                reprs[zp] = pi
+
+                if ranks[zp] == ranks[zn]:
+                    ranks[zp] += 1
+
+    canonize(flatten_image, parents, sorted_pixels)
+    parents = np.reshape(parents, image.shape)
+
+    return parents, sorted_pixels
+
+
+def maxtree_union_find_level_compression(image, connection8=True):
+    """
+    Union-find with level compression.
+
+    -> Algorithm 5 in the paper.
+
+    Arguments:
+    image is supposed to be a numpy array.
+
+    Returns:
+    """
+
+    (width, height) = (image.shape[0], image.shape[1])
+
+    flatten_image = image.flatten()
+    resolution = flatten_image.shape[0]
+
+    # Unique value telling if a pixel is defined in the max tree or not.
+    undefined_node = resolution + 2
+
+    # We generate an extra vector of pixels that order nodes downard.
+    # This vector allow to traverse the tree both upward and downard
+    # without having to sort childrens of each node.
+    # Initially, we sort pixel by increasing value and add indices in it.
+    sorted_pixels = flatten_image.argsort()
+
+    # We store in the parent node of each pixel in an image.
+    # To do so we use the index of the pixel (x + y * width).
+    parents = np.full(
+        resolution,
+        fill_value=undefined_node,
+        dtype=np.uint32)
+
+    # zparents make root finding much faster.
+    zparents = parents.copy()
+
+    j = resolution - 1
+
+    # We go through sorted pixels in the reverse order.
+
+    for i in reversed(range(len(sorted_pixels))):
+        pi = sorted_pixels[i]
+        # Make a node.
+        # By default, a pixel is its own parent.
+        parents[pi] = pi
+        zparents[pi] = pi
+
+        zp = pi
+
+        # Find the row of this pixel.
+        pixel_row = math.floor(pi / width)
+
+        # We need to go through neighbors that already have a parent.
+        if connection8:
+            neighbors = get_8_neighbors(width, height, resolution, pi, pixel_row)
+        else:
+            neighbors = get_4_neighbors(width, height, resolution, pi, pixel_row)
+
+        # Filter neighbors.
+        neighbors = [n for n in neighbors if parents[n] != undefined_node]
+
+        # Go through neighbors.
+        for nei_pi in neighbors:
+            zn = find_pixel_parent(zparents, nei_pi)
+
+            if zn != zp:
+                if flatten_image[zp] == flatten_image[zn]:
+                    zp, zn = zn, zp
+
+                # Merge sets.
+                zparents[zn] = zp
+                parents[zn] = zp
+
+                sorted_pixels[j] = zn
+                j -= 1
+
+    canonize(flatten_image, parents, sorted_pixels)
+    parents = np.reshape(parents, image.shape)
+
+    return parents, sorted_pixels
 

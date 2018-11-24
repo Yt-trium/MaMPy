@@ -1,5 +1,6 @@
 import algo2 as mtlib
 import numpy as np
+import math
 import unittest
 
 class TestFindPixelParentFunction(unittest.TestCase):
@@ -109,6 +110,158 @@ class TestCanonizeFunction(unittest.TestCase):
         self.assertEqual(parents[7], 4)
         self.assertEqual(parents[8], 4)
 
+class TestNeighborFetching(unittest.TestCase):
+    """Test results when getting neighbor of a pixel"""
+
+    def test_fetch_empty_image(self):
+        with self.assertRaises(ZeroDivisionError):
+            mtlib.get_4_neighbors(0, 0, 0, 0, 0)
+
+        with self.assertRaises(ZeroDivisionError):
+            mtlib.get_8_neighbors(0, 0, 0, 0, 0)
+
+    def test_row_calculation(self):
+        """
+        Formula: pixel_row = math.floor(pixel_index / image_width)
+        """
+
+        self.assertEqual(math.floor(0 / 100), 0)
+        self.assertEqual(math.floor(50 / 100), 0)
+        self.assertEqual(math.floor(99 / 100), 0)
+        self.assertEqual(math.floor(100 / 100), 1)
+        self.assertEqual(math.floor(0 / 1), 0)
+        self.assertEqual(math.floor(1 / 1), 1)
+        self.assertEqual(math.floor(2 / 1), 2)
+        self.assertEqual(math.floor(0 / 20), 0)
+        self.assertEqual(math.floor(39 / 20), 1)
+        self.assertEqual(math.floor(40 / 20), 2)
+
+    def test_one_row_image(self):
+        width = 100
+        height = 1
+        resolution = 100
+        pi = 20
+        row = math.floor(pi / width)
+
+        n4 = mtlib.get_4_neighbors(width, height, resolution, pi, row)
+        n8 = mtlib.get_8_neighbors(width, height, resolution, pi, row)
+
+        self.assertEqual(2, len(n4))
+        self.assertEqual(19, n4[0])
+        self.assertEqual(21, n4[1])
+        self.assertEqual(n4, n8)
+
+    def test_one_col_image(self):
+        width = 1
+        height = 100
+        resolution = 100
+        pi = 40
+        row = math.floor(pi / width)
+
+        n4 = mtlib.get_4_neighbors(width, height, resolution, pi, row)
+        n8 = mtlib.get_8_neighbors(width, height, resolution, pi, row)
+
+        self.assertEqual(2, len(n4))
+        self.assertEqual(39, n4[0])
+        self.assertEqual(41, n4[1])
+        self.assertEqual(n4, n8)
+
+    def test_upper_left_corner(self):
+        width = 20
+        height = 10
+        resolution = 200
+        pi = 0
+        row = 0
+
+        n4 = mtlib.get_4_neighbors(width, height, resolution, pi, row)
+        n8 = mtlib.get_8_neighbors(width, height, resolution, pi, row)
+
+        self.assertEqual(2, len(n4))
+        self.assertTrue(1 in n4)
+        self.assertTrue(20 in n4)
+
+        self.assertEqual(3, len(n8))
+        self.assertTrue(all(pi in n8 for pi in n4))
+        self.assertTrue(21 in n8)
+
+    def test_upper_right_corner(self):
+        width = 20
+        height = 10
+        resolution = 200
+        pi = 19
+        row = 0
+
+        n4 = mtlib.get_4_neighbors(width, height, resolution, pi, row)
+        n8 = mtlib.get_8_neighbors(width, height, resolution, pi, row)
+
+        self.assertEqual(2, len(n4))
+        self.assertTrue(18 in n4)
+        self.assertTrue(39 in n4)
+
+        self.assertEqual(3, len(n8))
+        self.assertTrue(all(pi in n8 for pi in n4))
+        self.assertTrue(38 in n8)
+
+    def test_lower_left_corner(self):
+        width = 20
+        height = 10
+        resolution = 200
+        pi = 180
+        row = 9
+
+        n4 = mtlib.get_4_neighbors(width, height, resolution, pi, row)
+        n8 = mtlib.get_8_neighbors(width, height, resolution, pi, row)
+
+        self.assertEqual(2, len(n4))
+        self.assertTrue(181 in n4)
+        self.assertTrue(160 in n4)
+
+        self.assertEqual(3, len(n8))
+        self.assertTrue(all(pi in n8 for pi in n4))
+        self.assertTrue(161 in n8)
+
+    def test_lower_left_corner(self):
+        width = 20
+        height = 10
+        resolution = 200
+        pi = 199
+        row = 9
+
+        n4 = mtlib.get_4_neighbors(width, height, resolution, pi, row)
+        n8 = mtlib.get_8_neighbors(width, height, resolution, pi, row)
+
+        self.assertEqual(2, len(n4))
+        self.assertTrue(198 in n4)
+        self.assertTrue(179 in n4)
+
+        self.assertEqual(3, len(n8))
+        self.assertTrue(all(pi in n8 for pi in n4))
+        self.assertTrue(178 in n8)
+
+    def test_fetch_inside(self):
+        width = 20
+        height = 10
+        resolution = 200
+        pi = 50
+        row = math.floor(pi / width)
+
+        n4 = mtlib.get_4_neighbors(width, height, resolution, pi, row)
+        n8 = mtlib.get_8_neighbors(width, height, resolution, pi, row)
+
+        self.assertEqual(4, len(n4))
+        self.assertTrue(49 in n4)
+        self.assertTrue(51 in n4)
+        self.assertTrue(30 in n4)
+        self.assertTrue(70 in n4)
+
+        self.assertEqual(8, len(n8))
+        self.assertTrue(71 in n8)
+        self.assertTrue(69 in n8)
+        self.assertTrue(29 in n8)
+        self.assertTrue(31 in n8)
+        self.assertTrue(all(pi in n8 for pi in n4))
+
+
 class TestBergerMaxTree(unittest.TestCase):
     """Test results of berger maxtree funciton."""
 
@@ -119,35 +272,20 @@ class TestBergerMaxTree(unittest.TestCase):
             [16, 12, 14]])
 
     def test_maxtree(self):
-        """
-        Values based on the paper:
-           A fair comparison of many max-tree computation algorithms.
-        """
+        (parents, nodes) = mtlib.maxtree_berger(self.image, connection8=True)
 
-        (parents, nodes) = mtlib.maxtree_berger(self.image, connection8=False)
+        print(parents)
+        print(nodes)
 
-        fparents = parents.flatten()
-        fnodes = nodes.flatten()
+        (parents, nodes) = mtlib.maxtree_berger_rank(self.image, connection8=False)
 
-        self.assertEqual(fnodes[0], 5)
-        self.assertEqual(fnodes[1], 4)
-        self.assertEqual(fnodes[2], 1)
-        self.assertEqual(fnodes[3], 7)
-        self.assertEqual(fnodes[4], 8)
-        self.assertEqual(fnodes[5], 3)
-        self.assertEqual(fnodes[6], 2)
-        self.assertEqual(fnodes[7], 6)
-        self.assertEqual(fnodes[8], 0)
+        print(parents)
+        print(nodes)
 
-        self.assertEqual(fparents[0], 1)
-        self.assertEqual(fparents[1], 4)
-        self.assertEqual(fparents[2], 1)
-        self.assertEqual(fparents[3], 4)
-        self.assertEqual(fparents[4], 5)
-        self.assertEqual(fparents[5], 5)
-        self.assertEqual(fparents[6], 4)
-        self.assertEqual(fparents[7], 4)
-        self.assertEqual(fparents[8], 4)
+        (parents, nodes) = mtlib.maxtree_union_find_level_compression(self.image, connection8=False)
+
+        print(parents)
+        print(nodes)
 
 
 if __name__ == '__main__':
