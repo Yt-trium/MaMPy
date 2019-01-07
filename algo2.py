@@ -376,6 +376,8 @@ def direct_filter(s, parent, ima, attr, λ):
 
     if attr[proot] < λ:
         out[proot] = 0
+    else:
+        out[proot] = ima[proot]
 
     for pi in s:
         q = parent[pi]
