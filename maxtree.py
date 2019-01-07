@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import imageio
 
+from algo2 import maxtree_berger_rank
+
 '''
   * read an image as a 2D array of 8 bit integer (grayscale)
 '''
@@ -44,6 +46,10 @@ if __name__ == '__main__':
     print(img_test_1.max())
     print(img_test_1.min())
 
+    (parents, sorted_pixels) = maxtree_berger_rank(img_test_1)
+    print(parents)
+    print(sorted_pixels)
+
     plt.imshow(img_test_1, cmap="gray")
     plt.show()
 
@@ -62,6 +68,10 @@ if __name__ == '__main__':
     print(type(img_test_2[0][0]))
     print(img_test_2.max())
     print(img_test_2.min())
+
+    (parents, sorted_pixels) = maxtree_berger_rank(img_test_2)
+    print(parents)
+    print(sorted_pixels)
 
     plt.imshow(img_test_2, cmap="gray")
     plt.show()
