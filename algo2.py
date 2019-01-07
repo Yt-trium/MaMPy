@@ -55,7 +55,7 @@ def get_4_neighbors(width, height, resolution, pi, pixel_row):
     of direct neighbor pixels using 4 connection.
     """
 
-    top_pi = pi - width 
+    top_pi = pi - width
     bottom_pi = pi + width
     left_pi = pi - 1
     right_pi = pi + 1
@@ -117,7 +117,7 @@ def maxtree_berger(image, connection8=True):
     Returns:
     """
 
-    (width, height) = (image.shape[0], image.shape[1])
+    (height, width) = (image.shape[0], image.shape[1])
 
     flatten_image = image.flatten()
     resolution = flatten_image.shape[0]
@@ -184,7 +184,7 @@ def maxtree_berger_rank(image, connection8=True):
     Returns:
     """
 
-    (width, height) = (image.shape[0], image.shape[1])
+    (height, width) = (image.shape[0], image.shape[1])
 
     flatten_image = image.flatten()
     resolution = flatten_image.shape[0]
@@ -276,7 +276,7 @@ def maxtree_union_find_level_compression(image, connection8=True):
     Returns:
     """
 
-    (width, height) = (image.shape[0], image.shape[1])
+    (height, width) = (image.shape[0], image.shape[1])
 
     flatten_image = image.flatten()
     resolution = flatten_image.shape[0]
@@ -399,7 +399,7 @@ if __name__ == '__main__':
     print(img1.shape)
 
     flatten_image = img1.flatten()
-    (parents, s) = maxtree_berger(img1, connection8=False)
+    (parents, s) = maxtree_union_find_level_compression(img1, connection8=False)
     attr = compute_attribute_area(s, parents, flatten_image)
     edited = direct_filter(s, parents, flatten_image, attr, area_filter)
     edited = np.reshape(edited, img1.shape)
