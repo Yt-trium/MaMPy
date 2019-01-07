@@ -260,7 +260,6 @@ def maxtree_berger_rank(image, connection8=True):
                     ranks[zp] += 1
 
     canonize(flatten_image, parents, sorted_pixels)
-    parents = np.reshape(parents, image.shape)
 
     return parents, sorted_pixels
 
@@ -342,23 +341,19 @@ def maxtree_union_find_level_compression(image, connection8=True):
                 j -= 1
 
     canonize(flatten_image, parents, sorted_pixels)
-    parents = np.reshape(parents, image.shape)
 
     return parents, sorted_pixels
 
-def compute_attribute(s, parent, ima, fct):
+def compute_attribute_area(s, parent, ima):
     # Image should be flattened.
     resolution = ima.shape[0]
 
     attr = np.full(
         resolution,
-        fill_value=0,
+        fill_value=1,
         dtype=np.uint32)
 
     proot = s[0]
-
-    for pi in s:
-        attr[pi] = fct(pi, ima[pi])
 
     for pi in reversed(s):
         if (pi == proot):
@@ -394,20 +389,17 @@ def direct_filter(s, parent, ima, attr, λ):
 
     return out
 
-def attr_pixel_value(pi, value):
-    return 1
-
 if __name__ == '__main__':
     file_path = sys.argv[1]
+    area_filter = int(sys.argv[2])
     img1 = image_read(filename=file_path)
 
     print(img1.shape)
 
-
     flatten_image = img1.flatten()
-    (parents, s) = maxtree_berger(img1, connection8=True)
-    attr = compute_attribute(s, parents, flatten_image, attr_pixel_value)
-    edited = direct_filter(s, parents, flatten_image, attr, 800)
+    (parents, s) = maxtree_berger(img1, connection8=False)
+    attr = compute_attribute_area(s, parents, flatten_image)
+    edited = direct_filter(s, parents, flatten_image, attr, area_filter)
     edited = np.reshape(edited, img1.shape)
 
     fig, (fig1, fig2) = plt.subplots(1, 2)
