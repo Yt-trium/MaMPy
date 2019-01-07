@@ -8,7 +8,15 @@ Reference:
 
 import numpy as np
 import math
+import matplotlib.pyplot as plt
+import imageio
+import sys
 
+'''
+  * read an image as a 2D array of 8 bit integer (grayscale)
+'''
+def image_read(filename):
+    return imageio.imread(uri=filename, as_gray=True).astype(dtype=np.uint8)
 
 def find_pixel_parent(parents, index):
     """
@@ -161,8 +169,6 @@ def maxtree_berger(image, connection8=True):
                 parents[nei_root] = pi
 
     canonize(flatten_image, parents, sorted_pixels)
-    parents = np.reshape(parents, image.shape)
-
     return parents, sorted_pixels
 
 
@@ -340,3 +346,75 @@ def maxtree_union_find_level_compression(image, connection8=True):
 
     return parents, sorted_pixels
 
+def compute_attribute(s, parent, ima, fct):
+    # Image should be flattened.
+    resolution = ima.shape[0]
+
+    attr = np.full(
+        resolution,
+        fill_value=0,
+        dtype=np.uint32)
+
+    proot = s[0]
+
+    for pi in s:
+        attr[pi] = fct(pi, ima[pi])
+
+    for pi in reversed(s):
+        if (pi == proot):
+            continue
+        q = parent[pi]
+        attr[q] += attr[pi]
+
+    return attr
+
+def direct_filter(s, parent, ima, attr, λ):
+    # Image should be flattened.
+    resolution = ima.shape[0]
+
+    out = np.full(
+        resolution,
+        fill_value=0,
+        dtype=np.uint32)
+
+    proot = s[0]
+
+    if attr[proot] < λ:
+        out[proot] = 0
+
+    for pi in s:
+        q = parent[pi]
+
+        if ima[q] == ima[pi]:
+            out[pi] = out[q]
+        elif attr[pi] < λ:
+            out[pi] = out[q]
+        else:
+            out[pi] = ima[q]
+
+    return out
+
+def attr_pixel_value(pi, value):
+    return 1
+
+if __name__ == '__main__':
+    file_path = sys.argv[1]
+    img1 = image_read(filename=file_path)
+
+    print(img1.shape)
+
+
+    flatten_image = img1.flatten()
+    (parents, s) = maxtree_berger(img1, connection8=True)
+    attr = compute_attribute(s, parents, flatten_image, attr_pixel_value)
+    edited = direct_filter(s, parents, flatten_image, attr, 800)
+    edited = np.reshape(edited, img1.shape)
+
+    fig, (fig1, fig2) = plt.subplots(1, 2)
+    fig1.set_axis_off();
+    fig2.set_axis_off();
+    fig1.set_title("Original")
+    fig2.set_title("After")
+    fig1.imshow(img1, cmap="gray")
+    fig2.imshow(edited, cmap="gray")
+    plt.show()
