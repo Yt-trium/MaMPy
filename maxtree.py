@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import imageio
 
-from algo2 import maxtree_berger_rank
+from algo2 import maxtree_berger, maxtree_berger_rank, maxtree_union_find_level_compression
 
 '''
   * read an image as a 2D array of 8 bit integer (grayscale)
@@ -14,6 +14,7 @@ def image_read(filename):
   * return the max tree of an given 2D image
 '''
 def maxtree(image):
+
     return 0
 
 if __name__ == '__main__':
@@ -24,7 +25,7 @@ if __name__ == '__main__':
     [ 50,  50,  50]
     [ 40,  20,  50]
     [ 50,  50,  50]
-    [120,  70,  80]
+    [120,  70,  80] 
     
             20
             |
@@ -37,7 +38,9 @@ if __name__ == '__main__':
     110  100  120  80
     
     '''
+    '''
     img_test_1 = np.array([[110, 90, 100], [50, 50, 50], [40, 20, 50], [50, 50, 50], [120, 70, 80]], dtype=np.uint8)
+
 
     print(img_test_1)
     print(img_test_1.shape)
@@ -47,11 +50,13 @@ if __name__ == '__main__':
     print(img_test_1.min())
 
     (parents, sorted_pixels) = maxtree_berger_rank(img_test_1)
+    parents = parents.reshape(img_test_1.shape)
     print(parents)
     print(sorted_pixels)
 
     plt.imshow(img_test_1, cmap="gray")
     plt.show()
+    '''
 
     '''
     image test 2
@@ -60,6 +65,7 @@ if __name__ == '__main__':
     [12, 12, 10]
     [16, 12, 14]
     '''
+
     img_test_2 = np.array([[15, 13, 16], [12, 12, 10], [16, 12, 14]],dtype=np.uint8)
 
     print(img_test_2)
@@ -69,7 +75,8 @@ if __name__ == '__main__':
     print(img_test_2.max())
     print(img_test_2.min())
 
-    (parents, sorted_pixels) = maxtree_berger_rank(img_test_2)
+    (parents, sorted_pixels) = maxtree_berger(img_test_2, False)
+    parents = parents.reshape(img_test_2.shape)
     print(parents)
     print(sorted_pixels)
 
