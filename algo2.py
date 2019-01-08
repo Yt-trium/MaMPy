@@ -7,6 +7,8 @@ Reference:
 """
 
 import numpy as np
+import numba
+from numba import jit
 import math
 import matplotlib.pyplot as plt
 import imageio
@@ -19,6 +21,7 @@ import time
 def image_read(filename):
     return imageio.imread(uri=filename, as_gray=True).astype(dtype=np.uint8)
 
+@jit(nopython=True)
 def find_pixel_parent(parents, index):
     """
     Given an image containing pixel's parent and a pixel id,
@@ -37,7 +40,7 @@ def find_pixel_parent(parents, index):
     else:
         return root
 
-
+@jit(nopython=True)
 def canonize(image, parents, nodes_order):
     """
     Makes sure all nodes of a max tree are valid.
@@ -49,7 +52,7 @@ def canonize(image, parents, nodes_order):
         if image[root] == image[parents[root]]:
             parents[pi] = parents[root]
 
-
+@jit(nopython=True)
 def get_4_neighbors(width, height, resolution, pi, pixel_row):
     """
     For a given image width, height and pixel index, return the index
@@ -77,7 +80,7 @@ def get_4_neighbors(width, height, resolution, pi, pixel_row):
 
     return neighbors
 
-
+@jit(nopython=True)
 def get_8_neighbors(width, height, resolution, pi, pixel_row):
     """
     For a given image width, height and pixel index, return the index
@@ -105,7 +108,7 @@ def get_8_neighbors(width, height, resolution, pi, pixel_row):
 
     return neighbors
 
-
+@jit(nopython=True)
 def maxtree_berger(image, connection8=True):
     """
     Union-find based max-tree algorithm as proposed by Berger et al.
@@ -143,7 +146,7 @@ def maxtree_berger(image, connection8=True):
     zparents = parents.copy()
 
     # We go through sorted pixels in the reverse order.
-    for pi in reversed(sorted_pixels):
+    for pi in sorted_pixels[::-1]:
         # Make a node.
         # By default, a pixel is its own parent.
         parents[pi] = pi
@@ -172,7 +175,7 @@ def maxtree_berger(image, connection8=True):
     canonize(flatten_image, parents, sorted_pixels)
     return parents, sorted_pixels
 
-
+@jit(nopython=True)
 def maxtree_berger_rank(image, connection8=True):
     """
     Union-find with union-by-rank based max-tree algorithm .
@@ -220,7 +223,7 @@ def maxtree_berger_rank(image, connection8=True):
     zparents = parents.copy()
 
     # We go through sorted pixels in the reverse order.
-    for pi in reversed(sorted_pixels):
+    for pi in sorted_pixels[::-1]:
         # Make a node.
         # By default, a pixel is its own parent.
         parents[pi] = pi
@@ -264,7 +267,7 @@ def maxtree_berger_rank(image, connection8=True):
 
     return parents, sorted_pixels
 
-
+@jit(nopython=True)
 def maxtree_union_find_level_compression(image, connection8=True):
     """
     Union-find with level compression.
@@ -305,8 +308,7 @@ def maxtree_union_find_level_compression(image, connection8=True):
 
     # We go through sorted pixels in the reverse order.
 
-    for i in reversed(range(len(sorted_pixels))):
-        pi = sorted_pixels[i]
+    for pi in sorted_pixels[::-1]:
         # Make a node.
         # By default, a pixel is its own parent.
         parents[pi] = pi
@@ -345,6 +347,7 @@ def maxtree_union_find_level_compression(image, connection8=True):
 
     return parents, sorted_pixels
 
+@jit(nopython=True)
 def compute_attribute_area(s, parent, ima):
     # Image should be flattened.
     resolution = ima.shape[0]
@@ -356,7 +359,7 @@ def compute_attribute_area(s, parent, ima):
 
     proot = s[0]
 
-    for pi in reversed(s):
+    for pi in s[::-1]:
         q = parent[pi]
         attr[q] += attr[pi]
 
@@ -364,6 +367,7 @@ def compute_attribute_area(s, parent, ima):
 
     return attr
 
+@jit(nopython=True)
 def direct_filter(s, parent, ima, attr, bda):
     # Image should be flattened.
     resolution = ima.shape[0]
@@ -441,6 +445,7 @@ if __name__ == '__main__':
     fig4.set_title("Maxtree Union & Level compression \n[{}s]".format(round(end - start, 2)))
     fig4.imshow(out3, cmap="gray")
 
+
     print("Différences (en nombre de pixels):")
     print("Algo 1 et 2: {}".format(np.count_nonzero(out1 == out2)))
     print("Algo 1 et 3: {}".format(np.count_nonzero(out1 == out3)))
@@ -448,6 +453,11 @@ if __name__ == '__main__':
     print(out1)
     print(out2)
     print(out3)
+
+
+    print(np.sum(np.abs(out1 - out2)))
+    print(np.sum(np.abs(out1 - out3)))
+    print(np.sum(np.abs(out2 - out3)))
 
     # Show plot
     plt.show()
