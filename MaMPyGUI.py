@@ -2,11 +2,15 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import numpy as np
 
 # Qt5 includes
 from PyQt5.QtWidgets import QMainWindow, QLabel, QAction, QFileDialog, QApplication, QGridLayout, QPushButton, QWidget, QSlider
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtGui import QIcon, QPixmap, QImage, QColor
 from PyQt5 import QtCore
+
+# Max Tree Berger includes
+from algo2 import  maxtree_union_find_level_compression, compute_attribute_area, image_read, direct_filter
 
 class MaMPyGUI(QMainWindow):
     # size of GUI
@@ -72,10 +76,26 @@ class MaMPyGUI(QMainWindow):
         fname = QFileDialog.getOpenFileName(self, 'Open file', '/home')
 
         if fname[0]:
+            file_path = fname[0]
+            self.imageSrc = image_read(filename=file_path)
+
+            self.flatten_image = self.imageSrc.flatten()
+            (self.maxtree_parents, self.maxtree_s) = maxtree_union_find_level_compression(self.imageSrc, connection8=True)
+            self.attr = compute_attribute_area(self.maxtree_s, self.maxtree_parents, self.flatten_image)
+
+            out = direct_filter(self.maxtree_s, self.maxtree_parents, self.flatten_image, self.attr, 1000)
+            out = np.reshape(out, self.imageSrc.shape)
+
+            img = QImage(out, out.shape[1], out.shape[0], QImage.Format_Grayscale8)
+
+            pixmap2 = QPixmap(img)
+
             pixmap = QPixmap(fname[0])
             pixmap = pixmap.scaled(self.xsize/2, self.ysize, QtCore.Qt.KeepAspectRatio)
+            pixmap2 = pixmap2.scaled(self.xsize/2, self.ysize, QtCore.Qt.KeepAspectRatio)
+
             self.imageLabelSrc.setPixmap(pixmap)
-            self.imageLabelRes.setPixmap(pixmap)
+            self.imageLabelRes.setPixmap(pixmap2)
 
     def computeOpenArea(self):
         return
