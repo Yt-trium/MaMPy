@@ -225,7 +225,7 @@ def maxtree_berger_rank(image, connection8=True):
         parents[pi] = pi
         zparents[pi] = pi
         ranks[pi] = 0
-        reprs[pi] = 0
+        reprs[pi] = pi
 
         zp = pi
 
@@ -356,14 +356,14 @@ def compute_attribute_area(s, parent, ima):
     proot = s[0]
 
     for pi in reversed(s):
-        if (pi == proot):
-            continue
         q = parent[pi]
         attr[q] += attr[pi]
 
+    attr[proot] = 1
+
     return attr
 
-def direct_filter(s, parent, ima, attr, λ):
+def direct_filter(s, parent, ima, attr, bda):
     # Image should be flattened.
     resolution = ima.shape[0]
 
@@ -374,7 +374,7 @@ def direct_filter(s, parent, ima, attr, λ):
 
     proot = s[0]
 
-    if attr[proot] < λ:
+    if attr[proot] < bda:
         out[proot] = 0
     else:
         out[proot] = ima[proot]
@@ -384,10 +384,10 @@ def direct_filter(s, parent, ima, attr, λ):
 
         if ima[q] == ima[pi]:
             out[pi] = out[q]
-        elif attr[pi] < λ:
+        elif attr[pi] < bda:
             out[pi] = out[q]
         else:
-            out[pi] = ima[q]
+            out[pi] = ima[pi]
 
     return out
 
@@ -401,6 +401,15 @@ if __name__ == '__main__':
     flatten_image = img1.flatten()
     (parents, s) = maxtree_union_find_level_compression(img1, connection8=False)
     attr = compute_attribute_area(s, parents, flatten_image)
+    print("Parents:")
+    print(parents.reshape(img1.shape))
+    print("S:")
+    print(s.reshape(img1.shape))
+    print("Attributes:")
+    print(attr.reshape(img1.shape))
+    print(max(attr))
+    print(min(attr))
+    print(attr[s[0]])
     edited = direct_filter(s, parents, flatten_image, attr, area_filter)
     edited = np.reshape(edited, img1.shape)
 
