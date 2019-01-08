@@ -262,6 +262,7 @@ class TestNeighborFetching(unittest.TestCase):
         self.assertTrue(all(pi in n8 for pi in n4))
 
 
+"""
 class TestBergerMaxTree(unittest.TestCase):
     """Test results of berger maxtree funciton."""
 
@@ -286,6 +287,7 @@ class TestBergerMaxTree(unittest.TestCase):
 
         print(parents)
         print(nodes)
+"""
 
 
 if __name__ == '__main__':
