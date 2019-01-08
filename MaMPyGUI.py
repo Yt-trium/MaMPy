@@ -34,6 +34,7 @@ class MaMPyGUI(QMainWindow):
         # Area Threshold
         self.areaThreshholdSlider = QSlider(QtCore.Qt.Horizontal)
         self.areaThreshholdSlider.setRange(0, 1)
+        self.areaThreshholdSlider.valueChanged.connect(self.computeOpenArea)
 
         # Compute Button
         self.computeButton = QPushButton("Compute")
@@ -83,21 +84,37 @@ class MaMPyGUI(QMainWindow):
             (self.maxtree_parents, self.maxtree_s) = maxtree_union_find_level_compression(self.imageSrc, connection8=True)
             self.attr = compute_attribute_area(self.maxtree_s, self.maxtree_parents, self.flatten_image)
 
-            out = direct_filter(self.maxtree_s, self.maxtree_parents, self.flatten_image, self.attr, 1000)
-            out = np.reshape(out, self.imageSrc.shape)
+            self.out = direct_filter(self.maxtree_s, self.maxtree_parents, self.flatten_image, self.attr, 100)
+            self.out = np.reshape(self.out, self.imageSrc.shape)
 
-            img = QImage(out, out.shape[1], out.shape[0], QImage.Format_Grayscale8)
+            print(self.out.shape)
+            img = QImage(self.out.data, self.out.shape[1], self.out.shape[0], QImage.Format_Grayscale8)
 
-            pixmap2 = QPixmap(img)
+            import qimage2ndarray
+            pixmap2 = QPixmap(qimage2ndarray.array2qimage(self.out))
 
-            pixmap = QPixmap(fname[0])
+            imgsrc = QImage(self.imageSrc, self.imageSrc.shape[1], self.imageSrc.shape[0], QImage.Format_Grayscale8)
+            pixmap = QPixmap(imgsrc)
             pixmap = pixmap.scaled(self.xsize/2, self.ysize, QtCore.Qt.KeepAspectRatio)
             pixmap2 = pixmap2.scaled(self.xsize/2, self.ysize, QtCore.Qt.KeepAspectRatio)
 
             self.imageLabelSrc.setPixmap(pixmap)
             self.imageLabelRes.setPixmap(pixmap2)
 
+            self.areaThreshholdSlider.setRange(0, (self.imageSrc.shape[0] * self.imageSrc.shape[1]))
+
     def computeOpenArea(self):
+        print(self.areaThreshholdSlider.value())
+        self.out = direct_filter(self.maxtree_s, self.maxtree_parents, self.flatten_image, self.attr, self.areaThreshholdSlider.value())
+        self.out = np.reshape(self.out, self.imageSrc.shape)
+
+        import qimage2ndarray
+        pixmap2 = QPixmap(qimage2ndarray.array2qimage(self.out))
+
+        pixmap2 = pixmap2.scaled(self.xsize / 2, self.ysize, QtCore.Qt.KeepAspectRatio)
+        self.imageLabelRes.setPixmap(pixmap2)
+
+
         return
 
 if __name__ == '__main__':
