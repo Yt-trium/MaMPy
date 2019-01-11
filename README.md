@@ -15,5 +15,5 @@ Mathematical Morphology Python Library
 
 ## Utilisation
 
-* Exemple d'utilisation de MaMPyGUIDemoMaxTree
+* Exemple d'utilisation de MaMPyGUIDemoMaxTree  
 [![MaMPy : max-tree & ouverture d'aire](https://img.youtube.com/vi/4NmaUEBlBkI/0.jpg)](https://youtu.be/4NmaUEBlBkI)
