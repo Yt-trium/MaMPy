@@ -1,5 +1,15 @@
 # Max Tree
 
+
+Afin de tester nos algorithmes, nous avons écris un filtre d'ouverture d'aire basé sur un maxtree.
+Pour voir si notre ouverture d'air fonctionne correctement, nous avons fait une image synthétique simple contenant des
+carrés de différentes tailles:
+
+![](examples/images/area_test_02_inverted.png)
+
+Voici le résultats que nous obtenons.
+
+
 Avec une ouverture d'air de 50, rien n'est filtré puisque aucune composante a une aire < 50.
 ![](results/area_test_02_inverted_50.png)
 Avec une ouverture d'air de 1000.
