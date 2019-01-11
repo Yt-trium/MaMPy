@@ -3,7 +3,7 @@
 Afin de tester nos algorithmes, nous avons écris un filtre d'ouverture d'aire basé sur un maxtree.
 Pour voir si notre ouverture d'air fonctionne correctement, nous avons fait une image synthétique simple contenant des
 carrés de différentes tailles :
-![](../examples/images/area_test_02_inverted.png)
+![](../examples/images/area_test_02_inverted.png)  
 Afin de tester les performances de nos algorithmes, nous avons essayé le filtre d'ouverture d'aire sur une image plus
 grande : Noyau_Slice68 de taille 1536 x 2048.
 ![](../examples/images/Noyau_Slice68.png)
