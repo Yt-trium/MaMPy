@@ -22,7 +22,7 @@ from PyQt5 import QtCore
 # Utilities
 from utils import image_read
 # Max-Tree Berger
-from algo2 import maxtree_union_find_level_compression, compute_attribute_area, direct_filter
+from maxtree import maxtree_union_find_level_compression, compute_attribute_area, direct_filter
 
 
 class MaMPyGUIDemoMaxTree(QMainWindow):
