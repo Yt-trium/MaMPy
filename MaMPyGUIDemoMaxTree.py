@@ -12,10 +12,10 @@ import numpy as np
 import qimage2ndarray
 
 # Qt5 includes
-from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QFileDialog, QProgressDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, QFileDialog
 from PyQt5.QtWidgets import QWidget, QLabel, QSlider, QSpinBox
-from PyQt5.QtWidgets import QGridLayout, QHBoxLayout, QVBoxLayout
-from PyQt5.QtGui import QIcon, QPixmap, QImage, QColor
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout
+from PyQt5.QtGui import QPixmap
 from PyQt5 import QtCore
 
 # MaMPy includes
@@ -23,6 +23,7 @@ from PyQt5 import QtCore
 from utils import image_read
 # Max-Tree Berger
 from algo2 import maxtree_union_find_level_compression, compute_attribute_area, direct_filter
+
 
 class MaMPyGUIDemoMaxTree(QMainWindow):
     # default size of GUI
@@ -126,19 +127,11 @@ class MaMPyGUIDemoMaxTree(QMainWindow):
             # Read the image
             self.imageSrc = image_read(filename[0])
 
-            # Wait progress dialog
-            waitMessageBox = QProgressDialog("Max-Tree computation", None, 0, 0, parent=self)
-            waitMessageBox.setWindowTitle("Max-Tree computation")
-            waitMessageBox.show()
-
             # Compute the Max-Tree
             (self.maxtree_p, self.maxtree_s) = maxtree_union_find_level_compression(self.imageSrc, connection8=True)
 
             self.imageSrcFlat = self.imageSrc.flatten()
             self.maxtree_a = compute_attribute_area(self.maxtree_s, self.maxtree_p, self.imageSrcFlat)
-
-            # Hide wait dialog
-            waitMessageBox.close()
 
             # Update slider and spinbox in the image resolution range
             self.areaThresholdSlider.setRange(0, (self.imageSrc.shape[0] * self.imageSrc.shape[1]))
