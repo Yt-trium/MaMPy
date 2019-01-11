@@ -3,20 +3,20 @@ Mathematical Morphology Python Library
 
 ## Structure du dépôt
 
-* ![MaMPyGUIDemoMaxTree.py](MaMPyGUIDemoMaxTree.py) : Demo Max-Tree avec filtre d'ouverture d'air
-* ![maxtree.py](maxtree.py) : Implémentation Max-Tree et ouverture d'air
+* ![MaMPyGUIDemoMaxTree.py](MaMPyGUIDemoMaxTree.py) : Demo Max-Tree avec filtre d'ouverture d'air.
+* ![maxtree.py](maxtree.py) : Implémentation Max-Tree et ouverture d'air.
+* ![maxtree_profile.py](maxtree_profile.py) : Analyse de performances et de résultats de maxtree.
+* ![maxtree_test.py](maxtree_test.py) : Test de maxtree.
 
-*
+* ![doc](doc) : Dossier contenant la documentation et les articles utilisés pour le développement.
+* ![results](results) : Dossier contenant les résultats générer avec maxtree_profilel
+* ![examples/images](examples/images) : Dossier contenant les images d'entrée utilisé pour les tests et exemples.
+
 
 ## Utilisation
 
-Afin de tester nos algorithmes, nous avons écris un filtre d'ouverture d'aire basé sur un maxtree.
-Pour voir si notre ouverture d'air fonctionne correctement, nous avons fait une image synthétique simple contenant des
-carrés de différentes tailles:
-
-![](examples/images/area_test_02_inverted.png)
-
-Voici le résultats que nous obtenons.
+* Exemple d'utilisation de MaMPyGUIDemoMaxTree  
+[![MaMPy : max-tree & ouverture d'aire](https://img.youtube.com/vi/4NmaUEBlBkI/0.jpg)](https://youtu.be/4NmaUEBlBkI)
 
 ## Maxtree: explications
 
@@ -55,12 +55,4 @@ Ici, les noeuds **E, H et D** font parti de la même composante. C'est le même 
 permet pas de combiner les noeuds directement. **E** est canonique alors que **H et D** ne le sont pas.
 
 L'algorithme par **Flooding** suit la même idée sauf qu'il fonctionne par propagation pour économiser des instructions. 
-
-
-
-
-
-
-
-
 
