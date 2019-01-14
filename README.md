@@ -36,6 +36,42 @@ Le premier argument est le chemin de l'image, le second l'air minimum pour le fi
 * Exemple d'utilisation de MaMPyGUIDemoMaxTree  
 [![MaMPy : max-tree & ouverture d'aire](https://img.youtube.com/vi/4NmaUEBlBkI/0.jpg)](https://youtu.be/4NmaUEBlBkI)
 
+## Documentation technique
+
+* inputs
+  * lecture d'image : utils.image_read
+
+* maxtree : calcul du maxtree
+  * (parent, s) = maxtree_union_find_level_compression(imageSrc, connection8=True)
+    * arguments
+      * imageSrc : l'image source sous forme d'array numpy 2D.
+      * connection8 : booléen vrai pour 8 connexité, faux pour 4 connexité.
+    * return
+      * parent et s (voir documentation scientifique)
+
+* maxtree : application du filtre d'ouverture d'aire
+  * attributs = compute_attribute_area(s, parent, imageSrcFlat)
+    * arguments :
+      * s : crée par maxtree_union_find_level_compression.
+      * parent : crée par maxtree_union_find_level_compression.
+      * imageSrcFlat : l'image source sous forme d'array 1D.
+    * return
+      * attributs : les attributs d'aire
+  * imageRes = direct_filter(s, parent, imageSrcFlat, attributs, threshold)
+    * arguments :
+      * s : crée par maxtree_union_find_level_compression.
+      * parent : crée par maxtree_union_find_level_compression.
+      * imageSrcFlat : l'image source sous forme d'array 1D.
+      * attributs : les attributs d'aire
+      * threshold : seuille pour le filtrage d'attributs
+    * return
+      * imageRes : l'image resultante sous forme d'array 1D
+
+* outputs
+  * imageRes.reshape(imageSrc.shape) pour récupérer un array numpy 2D de la bonne taille.
+  * QPixmap(qimage2ndarray.array2qimage(imageRes)) pour mettre le résultat dans un QPixmap.
+    * Le QPixmap peut ensuite être affiché dans un conteneur Qt, sauvegardé dans un fichier, transforme en QImage, etc.
+
 ## Documentation scientifique
 
 ### Maxtree avec Immersion Algorithms
