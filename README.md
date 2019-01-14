@@ -6,7 +6,7 @@ Mathematical Morphology Python Library
 * [MaMPyGUIDemoMaxTree.py](MaMPyGUIDemoMaxTree.py) : Demo Max-Tree avec filtre d'ouverture d'air.
 * [maxtree.py](maxtree.py) : Implémentation Max-Tree et ouverture d'air.
 * [maxtree_profile.py](maxtree_profile.py) : Analyse de performances et de résultats de maxtree.
-* [maxtree_test.py](maxtree_test.py) : Test de maxtree.
+* [maxtree_test.py](maxtree_test.py) : Tests utilisé pendant le développement.
 
 * [doc](doc) : Dossier contenant la documentation et les articles utilisés pour le développement.
 * [results](results) : Dossier contenant les résultats générer avec maxtree_profilel
@@ -14,11 +14,27 @@ Mathematical Morphology Python Library
 
 ## Résultats
 
-## Utilisation
+[Les résultats sont disponibles dans le sous dossier correspondant.](results)
+
+## Documentation Utilisateur
+
+Avant de commencer, il est nécessaire d'installer les dépendances (voir requirements.txt). Il est fortement conseillé
+d'utiliser en environnement python virtuel (venv par exemple).
+
+* Lancer MaMPyGUIDemoMaxTree avec python3 :
+```
+python3 MaMPyGUIDemoMaxTree.py
+```
+
+* Lancer le profiler avec python3 :
+```
+python3 maxtree_profile.py examples/images/circuit_small.png 500
+```
+Le premier argument est le chemin de l'image, le second l'air minimum pour le filtrage d'air.
+
 
 * Exemple d'utilisation de MaMPyGUIDemoMaxTree  
 [![MaMPy : max-tree & ouverture d'aire](https://img.youtube.com/vi/4NmaUEBlBkI/0.jpg)](https://youtu.be/4NmaUEBlBkI)
-
 
 ## Documentation scientifique
 
