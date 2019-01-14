@@ -1,4 +1,4 @@
-import algo2 as mtlib
+import maxtree as mtlib
 import numpy as np
 import math
 import unittest
