@@ -8,7 +8,7 @@ Et utilisé une image présente dans le cours :
 ![](../examples/images/circuit_small.png)
 Afin de tester les performances de nos algorithmes, nous avons essayé le filtre d'ouverture d'aire sur une image plus
 grande : Noyau_Slice68 de taille 1536 x 2048.
-![](../examples/images/Noyau_Slice68.png)
+![](../examples/images/Noyau_Slice68.png)  
 
 
 Résultats :
