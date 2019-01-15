@@ -1,15 +1,12 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 """
-Max-Tree computation using the Berger algorithms.
+Max-Tree computation and filters.
 
 Reference:
-    A fair comparison of many max-tree computation algorithms
+    [1] A fair comparison of many max-tree computation algorithms
     (Extended version of the paper submitted to ISMM 2013)
     Edwin Carlinet, Thierry Géraud.
 
-Implementation
+Authors:
 K. Masson
 C. Meyer
 """
@@ -18,10 +15,110 @@ import numpy as np
 import numba
 from numba import jit
 import math
+import logging
+from collections import namedtuple
 
 # MaMPy includes
 # Utilities
 from utils import image_read
+
+
+# Named Tuple for the max-tree structure
+MaxTreeStructure = namedtuple("MaxTreeStructure", ["parent", "S"])
+
+@jit(nopython=True)
+def maxtree_berger_rank(image, connection8=True):
+    """
+    Union-find with union-by-rank based max-tree algorithm .
+
+    -> Algorithm 3 in the paper.
+
+    Arguments:
+    image is supposed to be a numpy array.
+
+    Returns:
+    """
+
+    (height, width) = (image.shape[0], image.shape[1])
+
+    flatten_image = image.flatten()
+    resolution = flatten_image.shape[0]
+
+    # Unique value telling if a pixel is defined in the max tree or not.
+    undefined_node = resolution + 2
+
+    # We generate an extra vector of pixels that order nodes downard.
+    # This vector allow to traverse the tree both upward and downard
+    # without having to sort childrens of each node.
+    # Initially, we sort pixel by increasing value and add indices in it.
+    sorted_pixels = flatten_image.argsort()
+
+    # We store in the parent node of each pixel in an image.
+    # To do so we use the index of the pixel (x + y * width).
+    parents = np.full(
+        resolution,
+        fill_value=undefined_node,
+        dtype=np.uint32)
+
+    ranks = np.full(
+        resolution,
+        fill_value=0,
+        dtype=np.uint32)
+
+    reprs = np.full(
+        resolution,
+        fill_value=0,
+        dtype=np.uint32)
+
+    # zparents make root finding much faster.
+    zparents = parents.copy()
+
+    # We go through sorted pixels in the reverse order.
+    for pi in sorted_pixels[::-1]:
+        # Make a node.
+        # By default, a pixel is its own parent.
+        parents[pi] = pi
+        zparents[pi] = pi
+        ranks[pi] = 0
+        reprs[pi] = pi
+
+        zp = pi
+
+        # Find the row of this pixel.
+        pixel_row = math.floor(pi / width)
+
+        # We need to go through neighbors that already have a parent.
+        if connection8:
+            neighbors = get_8_neighbors(width, height, resolution, pi, pixel_row)
+        else:
+            neighbors = get_4_neighbors(width, height, resolution, pi, pixel_row)
+
+        # Filter neighbors.
+        neighbors = [n for n in neighbors if parents[n] != undefined_node]
+
+        # Go through neighbors.
+        for nei_pi in neighbors:
+            zn = find_pixel_parent(zparents, nei_pi)
+
+            if zn != zp:
+                parents[reprs[zn]] = pi
+
+                if ranks[zp] < ranks[zn]:
+                    # Swap them.
+                    zp, zn = zn, zp
+
+                # Merge sets.
+                zparents[zn] = zp
+                reprs[zp] = pi
+
+                if ranks[zp] == ranks[zn]:
+                    ranks[zp] += 1
+
+    canonize(flatten_image, parents, sorted_pixels)
+
+    return MaxTreeStructure(parents, sorted_pixels)
+
+
 
 
 @jit(nopython=True)
@@ -180,98 +277,6 @@ def maxtree_berger(image, connection8=True):
     return parents, sorted_pixels
 
 
-@jit(nopython=True)
-def maxtree_berger_rank(image, connection8=True):
-    """
-    Union-find with union-by-rank based max-tree algorithm .
-
-    -> Algorithm 3 in the paper.
-
-    Arguments:
-    image is supposed to be a numpy array.
-
-    Returns:
-    """
-
-    (height, width) = (image.shape[0], image.shape[1])
-
-    flatten_image = image.flatten()
-    resolution = flatten_image.shape[0]
-
-    # Unique value telling if a pixel is defined in the max tree or not.
-    undefined_node = resolution + 2
-
-    # We generate an extra vector of pixels that order nodes downard.
-    # This vector allow to traverse the tree both upward and downard
-    # without having to sort childrens of each node.
-    # Initially, we sort pixel by increasing value and add indices in it.
-    sorted_pixels = flatten_image.argsort()
-
-    # We store in the parent node of each pixel in an image.
-    # To do so we use the index of the pixel (x + y * width).
-    parents = np.full(
-        resolution,
-        fill_value=undefined_node,
-        dtype=np.uint32)
-
-    ranks = np.full(
-        resolution,
-        fill_value=0,
-        dtype=np.uint32)
-
-    reprs = np.full(
-        resolution,
-        fill_value=0,
-        dtype=np.uint32)
-
-    # zparents make root finding much faster.
-    zparents = parents.copy()
-
-    # We go through sorted pixels in the reverse order.
-    for pi in sorted_pixels[::-1]:
-        # Make a node.
-        # By default, a pixel is its own parent.
-        parents[pi] = pi
-        zparents[pi] = pi
-        ranks[pi] = 0
-        reprs[pi] = pi
-
-        zp = pi
-
-        # Find the row of this pixel.
-        pixel_row = math.floor(pi / width)
-
-        # We need to go through neighbors that already have a parent.
-        if connection8:
-            neighbors = get_8_neighbors(width, height, resolution, pi, pixel_row)
-        else:
-            neighbors = get_4_neighbors(width, height, resolution, pi, pixel_row)
-
-        # Filter neighbors.
-        neighbors = [n for n in neighbors if parents[n] != undefined_node]
-
-        # Go through neighbors.
-        for nei_pi in neighbors:
-            zn = find_pixel_parent(zparents, nei_pi)
-
-            if zn != zp:
-                parents[reprs[zn]] = pi
-
-                if ranks[zp] < ranks[zn]:
-                    # Swap them.
-                    zp, zn = zn, zp
-
-                # Merge sets.
-                zparents[zn] = zp
-                reprs[zp] = pi
-
-                if ranks[zp] == ranks[zn]:
-                    ranks[zp] += 1
-
-    canonize(flatten_image, parents, sorted_pixels)
-
-    return parents, sorted_pixels
-
 
 @jit(nopython=True)
 def maxtree_union_find_level_compression(image, connection8=True):
@@ -353,61 +358,128 @@ def maxtree_union_find_level_compression(image, connection8=True):
     return parents, sorted_pixels
 
 
+
 @jit(nopython=True)
-def maxtree(image, connection8=True):
+def direct_filter(maxtree_p_s, input, attribute, λ):
     """
-    Use the default max-tree algorithms
+    The parameters order follows the order given in the article [1]
+    :param maxtree_p_s:
+    :param input:
+    :param attribute:
+    :param λ:
+    :return:
     """
-    return maxtree_union_find_level_compression(image, connection8)
 
-
-@jit(nopython=True)
-def compute_attribute_area(s, parent, ima):
-    # Image should be flattened.
-    resolution = ima.shape[0]
-
-    attr = np.full(
-        resolution,
-        fill_value=1,
-        dtype=np.uint32)
-
-    proot = s[0]
-
-    for pi in s[::-1]:
-        q = parent[pi]
-        attr[q] += attr[pi]
-
-    attr[proot] = 1
-
-    return attr
-
-
-@jit(nopython=True)
-def direct_filter(s, parent, ima, attr, bda):
-    # Image should be flattened.
-    resolution = ima.shape[0]
+    ima = input.flatten()
 
     out = np.full(
-        resolution,
+        ima.shape,
         fill_value=0,
-        dtype=np.uint32)
+        dtype=input.dtype)
 
-    proot = s[0]
+    proot = maxtree_p_s.S[0]
 
-    if attr[proot] < bda:
+    if attribute[proot] < λ:
         out[proot] = 0
     else:
         out[proot] = ima[proot]
 
-    for pi in s:
-        q = parent[pi]
+    for p in maxtree_p_s.S:
+        q = maxtree_p_s.parent[p]
 
-        if ima[q] == ima[pi]:
-            out[pi] = out[q]
-        elif attr[pi] < bda:
-            out[pi] = out[q]
+        if ima[q] == ima[p]:
+            out[p] = out[q]     # p not canonical
+        elif attribute[p] < λ:
+            out[p] = out[q]     # Criterion failed
         else:
-            out[pi] = ima[pi]
+            out[p] = ima[p]     # Criterion pass
 
-    return out
+    return out.reshape(input.shape)
+
+
+
+@jit(nopython=True)
+def maxtree(input, connexity=None):
+    """
+    Compute the max-tree of a 2D/3D image using simple strategy to select algorithms
+    (Check the "A comparison of many max-tree computation algorithms" poster for the decision tree strategy)
+    This is the only max-tree computing function the regular user should use
+
+    :param input: numpy ndarray of a single channel image
+                  Good practice : use a numpy fixed-size dtype (https://www.numpy.org/devdocs/user/basics.types.html)
+    :param connexity: connexity of the maxtree : acceptable value : 2D 4/8 - 3D 6/18/26 (default 4 and 6)
+    :return: the maxtree of the image (parent and S vector pair)
+    """
+    # Check input
+    if input.ndim not in [2, 3]:
+        raise ValueError("Input image is not a 2D or 3D array")
+
+    if input.ndim == 2:
+        if connexity is None or connexity not in [4, 8]:
+            connexity = 4
+            # print("Connexity set to default (2D -> 4-connexity)")
+    if input.ndim == 3:
+        if connexity is None or connexity not in [6, 18, 26]:
+            connexity = 6
+            # print("Connexity set to default (3D -> 6-connexity)")
+
+    # Choose algorithm
+    # Low quantization (<= 8-bit pixels) : Salembier et al.
+    # /!\ Not Implemented Yet /!\
+    # if input.dtype in [np.bool, np.byte, np.ubyte, np.int8, np.uint8]:
+    # maxtree_salembier(input, connexity)
+
+    # High quantization : Berger + rank
+    return maxtree_berger_rank(input, connexity)
+
+
+@jit(nopython=True)
+def area_filter(input, threshold, maxtree_p_s=None):
+    """
+    :param input: numpy ndarray of a single channel image
+    :param threshold: threshold of the filter (minimum area to keep)
+    :param maxtree_p_s: the maxtree of the image (parent and S vector pair)
+    :return: numpy ndarray of the image
+    """
+    # Check input
+    if input.ndim not in [2, 3]:
+        raise ValueError("Input image is not a 2D or 3D array")
+
+    if threshold < 1:
+        raise ValueError("Threshold less than 1")
+
+    if maxtree_p_s is None:
+        maxtree_p_s = maxtree(input)
+
+    if maxtree_p_s.parent.size != maxtree_p_s.S.size:
+        raise ValueError("Invalid max-tree")
+
+    if maxtree_p_s.S.size != input.size:
+        raise ValueError("Image and max-tree doesn't match")
+
+    # Compute area attribute
+    area_attribute = np.full(input.size,
+                             fill_value=1,
+                             dtype=np.uint32)
+
+    # Everything except the first item, reversed
+    # > np.arange(8)[:0:-1]
+    # array([7, 6, 5, 4, 3, 2, 1])
+    for p in maxtree_p_s.S[:0:-1]:
+        q = maxtree_p_s.parent[p]
+        area_attribute[q] += area_attribute[p]
+
+    # Apply Filter
+    return direct_filter(maxtree_p_s, input, area_attribute, threshold)
+
+
+image_input = image_read("examples/images/circuit_small.png")
+image_input = image_input / image_input.max()
+image_output = area_filter(image_input, 500)
+
+import matplotlib.pyplot as plt
+plt.imshow(image_input, cmap="gray")
+plt.show()
+plt.imshow(image_output, cmap="gray")
+plt.show()
 
