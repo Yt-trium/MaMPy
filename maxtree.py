@@ -56,6 +56,85 @@ def canonize(image, parents, nodes_order):
 
 
 @jit(nopython=True)
+def get_neighbors_2d(connexity, shape, pi, size):
+    neighbors = []
+
+    # 4-connexity
+    pi_row = math.floor(pi / shape[1])
+    pi_top = pi - shape[1]
+    pi_bot = pi + shape[1]
+    pi_lft = pi - 1
+    pi_rgt = pi + 1
+
+    if pi_top >= 0:
+        neighbors.append(pi_top)
+    if pi_bot < size:
+        neighbors.append(pi_bot)
+    if math.floor(pi_lft / shape[1]) == pi_row:
+        neighbors.append(pi_lft)
+    if math.floor(pi_rgt / shape[1]) == pi_row:
+        neighbors.append(pi_rgt)
+
+    # 8-connexity
+    if connexity == 8:
+        pi_top_lef = pi_top - 1
+        pi_top_rgt = pi_top + 1
+        pi_bot_lef = pi_bot - 1
+        pi_bot_rgt = pi_bot + 1
+
+        if math.floor(pi_top_lef / shape[1]) == pi_row - 1:
+            neighbors.append(pi_top_lef)
+        if math.floor(pi_top_rgt / shape[1]) == pi_row - 1:
+            neighbors.append(pi_top_rgt)
+        if math.floor(pi_bot_lef / shape[1]) == pi_row + 1:
+            neighbors.append(pi_bot_lef)
+        if math.floor(pi_bot_rgt / shape[1]) == pi_row + 1:
+            neighbors.append(pi_bot_rgt)
+
+    return neighbors
+
+
+@jit(nopython=True)
+def get_neighbors_3d(connexity, shape, pi, size):
+    neighbors = []
+
+    # 6-connexity
+    pi_row = math.floor(pi / shape[1])
+    pi_slc = math.floor(pi / shape[2])
+
+    pi_far = pi + shape[2]
+    pi_cls = pi - shape[2]
+    pi_top = pi - shape[1]
+    pi_bot = pi + shape[1]
+    pi_lft = pi - 1
+    pi_rgt = pi + 1
+
+    if pi_top >= 0:
+        neighbors.append(pi_top)
+    if pi_bot < size:
+        neighbors.append(pi_bot)
+    if math.floor(pi_lft / shape[1]) == pi_row:
+        neighbors.append(pi_lft)
+    if math.floor(pi_rgt / shape[1]) == pi_row:
+        neighbors.append(pi_rgt)
+    if math.floor(pi_far / shape[2]) == pi_slc:
+        neighbors.append(pi_far)
+    if math.floor(pi_cls / shape[2]) == pi_slc:
+        neighbors.append(pi_cls)
+
+    # 18-connexity
+    if (connexity >= 18):
+        # /!\ Not Implemented Yet /!\
+        return neighbors
+    # 26-connexity
+    if (connexity == 26):
+        # /!\ Not Implemented Yet /!\
+        return neighbors
+
+    return neighbors
+
+
+@jit(nopython=True)
 def get_neighbors(connexity, shape, pi, size):
     """
     :param connexity: connexity of the maxtree : acceptable value : 2D 4/8 - 3D 6/18/26 (default 4 and 6)
@@ -64,82 +143,15 @@ def get_neighbors(connexity, shape, pi, size):
     :return: indexes of the neighbors with the given connexity and position
     """
 
-    neighbors = []
-
     # 2D
     if len(shape) == 2:
-
-        # 4-connexity
-        pi_row = math.floor(pi / shape[1])
-        pi_top = pi - shape[1]
-        pi_bot = pi + shape[1]
-        pi_lft = pi - 1
-        pi_rgt = pi + 1
-
-        if pi_top >= 0:
-            neighbors.append(pi_top)
-        if pi_bot < size:
-            neighbors.append(pi_bot)
-        if math.floor(pi_lft / shape[1]) == pi_row:
-            neighbors.append(pi_lft)
-        if math.floor(pi_rgt / shape[1]) == pi_row:
-            neighbors.append(pi_rgt)
-
-        # 8-connexity
-        if connexity == 8:
-            pi_top_lef = pi_top - 1
-            pi_top_rgt = pi_top + 1
-            pi_bot_lef = pi_bot - 1
-            pi_bot_rgt = pi_bot + 1
-
-            if math.floor(pi_top_lef / shape[1]) == pi_row - 1:
-                neighbors.append(pi_top_lef)
-            if math.floor(pi_top_rgt / shape[1]) == pi_row - 1:
-                neighbors.append(pi_top_rgt)
-            if math.floor(pi_bot_lef / shape[1]) == pi_row + 1:
-                neighbors.append(pi_bot_lef)
-            if math.floor(pi_bot_rgt / shape[1]) == pi_row + 1:
-                neighbors.append(pi_bot_rgt)
+        return get_neighbors_2d(connexity, shape, pi, size)
 
     # 3D
     """
     if len(shape) == 3:
-
-        # 6-connexity
-        pi_row = math.floor(pi / shape[1])
-        pi_slc = math.floor(pi / shape[2])
-
-        pi_far = pi + shape[2]
-        pi_cls = pi - shape[2]
-        pi_top = pi - shape[1]
-        pi_bot = pi + shape[1]
-        pi_lft = pi - 1
-        pi_rgt = pi + 1
-
-        if pi_top >= 0:
-            neighbors.append(pi_top)
-        if pi_bot < np.prod(shape):
-            neighbors.append(pi_bot)
-        if math.floor(pi_lft / shape[1]) == pi_row:
-            neighbors.append(pi_lft)
-        if math.floor(pi_rgt / shape[1]) == pi_row:
-            neighbors.append(pi_rgt)
-        if math.floor(pi_far / shape[2]) == pi_slc:
-            neighbors.append(pi_far)
-        if math.floor(pi_cls / shape[2]) == pi_slc:
-            neighbors.append(pi_cls)
-
-        # 18-connexity
-        if(connexity >= 18):
-            # /!\ Not Implemented Yet /!\
-            pass
-        # 26-connexity
-        if(connexity == 26):
-            # /!\ Not Implemented Yet /!\
-            pass
+        return get_neighbors_3d(connexity, shape, pi, size)
     """
-
-    return neighbors
 
 
 @jit(nopython=True)
