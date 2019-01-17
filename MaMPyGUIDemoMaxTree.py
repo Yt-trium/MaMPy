@@ -43,9 +43,12 @@ class MaMPyGUIDemoMaxTree(QMainWindow):
         # Image Label Source
         self.imageLabelSrc = QLabel()
         self.imageLabelSrc.setAlignment(QtCore.Qt.AlignCenter)
-        # Image Label Result
-        self.imageLabelRes = QLabel()
-        self.imageLabelRes.setAlignment(QtCore.Qt.AlignCenter)
+        # Image Label Result 1
+        self.imageLabelRes1 = QLabel()
+        self.imageLabelRes1.setAlignment(QtCore.Qt.AlignCenter)
+        # Image Label Result 2
+        self.imageLabelRes2 = QLabel()
+        self.imageLabelRes2.setAlignment(QtCore.Qt.AlignCenter)
 
         # Area Threshold Slider
         self.areaThresholdSlider = QSlider(QtCore.Qt.Horizontal)
@@ -61,7 +64,8 @@ class MaMPyGUIDemoMaxTree(QMainWindow):
         self.thresholdLayout = QHBoxLayout()
 
         self.imageLabelLayout.addWidget(self.imageLabelSrc)
-        self.imageLabelLayout.addWidget(self.imageLabelRes)
+        self.imageLabelLayout.addWidget(self.imageLabelRes1)
+        self.imageLabelLayout.addWidget(self.imageLabelRes2)
         self.imageLabelLayoutWidget = QWidget()
         self.imageLabelLayoutWidget.setLayout(self.imageLabelLayout)
 
@@ -138,17 +142,23 @@ class MaMPyGUIDemoMaxTree(QMainWindow):
 
         # Image Source
         pixmapSrc = QPixmap(qimage2ndarray.array2qimage(self.imageSrc))
-        pixmapSrc = pixmapSrc.scaled((self.xsize / 2) - 50, self.ysize - 50, QtCore.Qt.KeepAspectRatio)
+        pixmapSrc = pixmapSrc.scaled((self.xsize / 3) - 50, self.ysize - 50, QtCore.Qt.KeepAspectRatio)
 
         self.imageLabelSrc.setPixmap(pixmapSrc)
 
         # Image Result
-        self.imageRes = contrast_filter(input=self.imageSrc, threshold=max(1,self.areaThresholdSpinbox.value()), maxtree_p_s=self.maxtree)
+        self.imageRes1 = area_filter(input=self.imageSrc, threshold=max(1,self.areaThresholdSpinbox.value()), maxtree_p_s=self.maxtree)
 
-        pixmapRes = QPixmap(qimage2ndarray.array2qimage(self.imageRes))
-        pixmapRes = pixmapRes.scaled((self.xsize / 2) - 50, self.ysize - 50, QtCore.Qt.KeepAspectRatio)
+        pixmapRes1 = QPixmap(qimage2ndarray.array2qimage(self.imageRes1))
+        pixmapRes1 = pixmapRes1.scaled((self.xsize / 3) - 50, self.ysize - 50, QtCore.Qt.KeepAspectRatio)
 
-        self.imageLabelRes.setPixmap(pixmapRes)
+        self.imageRes2 = contrast_filter(input=self.imageSrc, threshold=max(1,self.areaThresholdSpinbox.value()), maxtree_p_s=self.maxtree)
+
+        pixmapRes2 = QPixmap(qimage2ndarray.array2qimage(self.imageRes2))
+        pixmapRes2 = pixmapRes2.scaled((self.xsize / 3) - 50, self.ysize - 50, QtCore.Qt.KeepAspectRatio)
+
+        self.imageLabelRes1.setPixmap(pixmapRes1)
+        self.imageLabelRes2.setPixmap(pixmapRes2)
 
 
 if __name__ == '__main__':
