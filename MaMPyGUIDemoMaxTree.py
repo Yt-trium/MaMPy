@@ -22,7 +22,7 @@ from PyQt5 import QtCore
 # Utilities
 from utils import image_read
 # Max-Tree Berger
-from maxtree import maxtree_union_find_level_compression, compute_attribute_area, direct_filter
+from maxtree import maxtree, area_filter, contrast_filter
 
 
 class MaMPyGUIDemoMaxTree(QMainWindow):
@@ -32,10 +32,6 @@ class MaMPyGUIDemoMaxTree(QMainWindow):
 
     # Images Attributes
     imageSrc = None
-    imageSrcFlat = None
-    maxtree_p = None
-    maxtree_s = None
-    maxtree_a = None
 
     # Initialisation of the class
     def __init__(self):
@@ -126,12 +122,7 @@ class MaMPyGUIDemoMaxTree(QMainWindow):
         if filename[0]:
             # Read the image
             self.imageSrc = image_read(filename[0])
-
-            # Compute the Max-Tree
-            (self.maxtree_p, self.maxtree_s) = maxtree_union_find_level_compression(self.imageSrc, connection8=True)
-
-            self.imageSrcFlat = self.imageSrc.flatten()
-            self.maxtree_a = compute_attribute_area(self.maxtree_s, self.maxtree_p, self.imageSrcFlat)
+            self.maxtree = maxtree(self.imageSrc)
 
             # Update slider and spinbox in the image resolution range
             self.areaThresholdSlider.setRange(0, (self.imageSrc.shape[0] * self.imageSrc.shape[1]))
@@ -152,8 +143,7 @@ class MaMPyGUIDemoMaxTree(QMainWindow):
         self.imageLabelSrc.setPixmap(pixmapSrc)
 
         # Image Result
-        self.imageRes = direct_filter(self.maxtree_s, self.maxtree_p, self.imageSrcFlat, self.maxtree_a, self.areaThresholdSpinbox.value())
-        self.imageRes = self.imageRes.reshape(self.imageSrc.shape)
+        self.imageRes = contrast_filter(input=self.imageSrc, threshold=max(1,self.areaThresholdSpinbox.value()), maxtree_p_s=self.maxtree)
 
         pixmapRes = QPixmap(qimage2ndarray.array2qimage(self.imageRes))
         pixmapRes = pixmapRes.scaled((self.xsize / 2) - 50, self.ysize - 50, QtCore.Qt.KeepAspectRatio)
