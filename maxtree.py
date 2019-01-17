@@ -473,9 +473,52 @@ def area_filter(input, threshold, maxtree_p_s=None):
     return direct_filter(maxtree_p_s, input, area_attribute, threshold)
 
 
+@jit(nopython=True)
+def contrast_filter(input, threshold, maxtree_p_s=None):
+    """
+    :param input: numpy ndarray of a single channel image
+    :param threshold: threshold of the filter (minimum contrast to keep)
+    :param maxtree_p_s: the maxtree of the image (parent and S vector pair)
+    :return: numpy ndarray of the image
+    """
+    # Check input
+    if input.ndim not in [2, 3]:
+        raise ValueError("Input image is not a 2D or 3D array")
+
+    if threshold < 1:
+        raise ValueError("Threshold less than 1")
+
+    if maxtree_p_s is None:
+        maxtree_p_s = maxtree(input)
+
+    if maxtree_p_s.parent.size != maxtree_p_s.S.size:
+        raise ValueError("Invalid max-tree")
+
+    if maxtree_p_s.S.size != input.size:
+        raise ValueError("Image and max-tree doesn't match")
+
+    # Compute contrast attribute
+    pixel_values = input.flatten()
+    contrast_attribute = np.full(input.size,
+                             fill_value=0,
+                             dtype=np.float64)
+
+    # Everything except the first item, reversed
+    # > np.arange(8)[:0:-1]
+    # array([7, 6, 5, 4, 3, 2, 1])
+    for p in maxtree_p_s.S[:0:-1]:
+        q = maxtree_p_s.parent[p]
+        contrast_attribute[q] = max(contrast_attribute[q], pixel_values[p] - pixel_values[q])
+
+    # Apply Filter
+    return direct_filter(maxtree_p_s, input, contrast_attribute, threshold)
+
+"""
 image_input = image_read("examples/images/circuit_small.png")
-image_input = image_input / image_input.max()
-image_output = area_filter(image_input, 500)
+# image_input = image_input / image_input.max()
+# image_output = area_filter(image_input, 500)
+image_output = contrast_filter(image_input, 1)
+
 
 import matplotlib.pyplot as plt
 plt.imshow(image_input, cmap="gray")
@@ -483,3 +526,6 @@ plt.show()
 plt.imshow(image_output, cmap="gray")
 plt.show()
 
+print(image_input.max(), image_input.min(), image_input.max() - image_input.min())
+
+"""
