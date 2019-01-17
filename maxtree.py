@@ -501,19 +501,20 @@ def contrast_filter(input, threshold, maxtree_p_s=None):
     pixel_values = input.flatten()
     contrast_attribute = np.full(input.size,
                              fill_value=0,
-                             dtype=np.float64)
+                             dtype=np.uint16)
 
     # Everything except the first item, reversed
     # > np.arange(8)[:0:-1]
     # array([7, 6, 5, 4, 3, 2, 1])
     for p in maxtree_p_s.S[:0:-1]:
         q = maxtree_p_s.parent[p]
-        contrast_attribute[q] = max(contrast_attribute[q], pixel_values[p] - pixel_values[q])
+        contrast_attribute[q] = max(contrast_attribute[q], pixel_values[p] - pixel_values[q] + contrast_attribute[p])
+        # print(contrast_attribute[q])
 
     # Apply Filter
     return direct_filter(maxtree_p_s, input, contrast_attribute, threshold)
 
-"""
+
 image_input = image_read("examples/images/circuit_small.png")
 # image_input = image_input / image_input.max()
 # image_output = area_filter(image_input, 500)
@@ -527,5 +528,3 @@ plt.imshow(image_output, cmap="gray")
 plt.show()
 
 print(image_input.max(), image_input.min(), image_input.max() - image_input.min())
-
-"""
