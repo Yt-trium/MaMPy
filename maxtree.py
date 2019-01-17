@@ -15,13 +15,11 @@ import numpy as np
 import numba
 from numba import jit
 import math
-import logging
 from collections import namedtuple
 
 # MaMPy includes
 # Utilities
 from utils import image_read
-
 
 # Named Tuple for the max-tree structure
 MaxTreeStructure = namedtuple("MaxTreeStructure", ["parent", "S"])
@@ -358,46 +356,6 @@ def maxtree_union_find_level_compression(image, connection8=True):
     return parents, sorted_pixels
 
 
-
-@jit(nopython=True)
-def direct_filter(maxtree_p_s, input, attribute, λ):
-    """
-    The parameters order follows the order given in the article [1]
-    :param maxtree_p_s:
-    :param input:
-    :param attribute:
-    :param λ:
-    :return:
-    """
-
-    ima = input.flatten()
-
-    out = np.full(
-        ima.shape,
-        fill_value=0,
-        dtype=input.dtype)
-
-    proot = maxtree_p_s.S[0]
-
-    if attribute[proot] < λ:
-        out[proot] = 0
-    else:
-        out[proot] = ima[proot]
-
-    for p in maxtree_p_s.S:
-        q = maxtree_p_s.parent[p]
-
-        if ima[q] == ima[p]:
-            out[p] = out[q]     # p not canonical
-        elif attribute[p] < λ:
-            out[p] = out[q]     # Criterion failed
-        else:
-            out[p] = ima[p]     # Criterion pass
-
-    return out.reshape(input.shape)
-
-
-
 @jit(nopython=True)
 def maxtree(input, connexity=None):
     """
@@ -434,6 +392,61 @@ def maxtree(input, connexity=None):
 
 
 @jit(nopython=True)
+def direct_filter(maxtree_p_s, input, attribute, λ):
+    """
+    The parameters order follows the order given in the article [1]
+    :param maxtree_p_s: the maxtree of the image (parent and S vector pair)
+    :param input: numpy ndarray of a single channel image
+    :param attribute: the attribute associated with the maxtree
+    :param λ: attribute threashold
+    :return: the filtered image
+    """
+
+    ima = input.flatten()
+
+    out = np.full(
+        ima.shape,
+        fill_value=0,
+        dtype=input.dtype)
+
+    proot = maxtree_p_s.S[0]
+
+    if attribute[proot] < λ:
+        out[proot] = 0
+    else:
+        out[proot] = ima[proot]
+
+    for p in maxtree_p_s.S:
+        q = maxtree_p_s.parent[p]
+
+        if ima[q] == ima[p]:
+            out[p] = out[q]     # p not canonical
+        elif attribute[p] < λ:
+            out[p] = out[q]     # Criterion failed
+        else:
+            out[p] = ima[p]     # Criterion pass
+
+    return out.reshape(input.shape)
+
+
+@jit(nopython=True)
+def get_area_attribute(input, maxtree_p_s):
+    # Compute area attribute
+    area_attribute = np.full(input.size,
+                             fill_value=1,
+                             dtype=np.uint32)
+
+    # Everything except the first item, reversed
+    # > np.arange(8)[:0:-1]
+    # array([7, 6, 5, 4, 3, 2, 1])
+    for p in maxtree_p_s.S[:0:-1]:
+        q = maxtree_p_s.parent[p]
+        area_attribute[q] += area_attribute[p]
+
+    return area_attribute
+
+
+@jit(nopython=True)
 def area_filter(input, threshold, maxtree_p_s=None):
     """
     :param input: numpy ndarray of a single channel image
@@ -458,19 +471,28 @@ def area_filter(input, threshold, maxtree_p_s=None):
         raise ValueError("Image and max-tree doesn't match")
 
     # Compute area attribute
-    area_attribute = np.full(input.size,
-                             fill_value=1,
-                             dtype=np.uint32)
+    area_attribute = get_area_attribute(input, maxtree_p_s)
+
+    # Apply Filter
+    return direct_filter(maxtree_p_s, input, area_attribute, threshold)
+
+
+@jit(nopython=True)
+def get_contrast_attribute(input, maxtree_p_s):
+    # Compute contrast attribute
+    pixel_values = input.flatten()
+    contrast_attribute = np.full(input.size,
+                             fill_value=0,
+                             dtype=np.uint16)
 
     # Everything except the first item, reversed
     # > np.arange(8)[:0:-1]
     # array([7, 6, 5, 4, 3, 2, 1])
     for p in maxtree_p_s.S[:0:-1]:
         q = maxtree_p_s.parent[p]
-        area_attribute[q] += area_attribute[p]
+        contrast_attribute[q] = max(contrast_attribute[q], pixel_values[p] - pixel_values[q] + contrast_attribute[p])
 
-    # Apply Filter
-    return direct_filter(maxtree_p_s, input, area_attribute, threshold)
+    return contrast_attribute
 
 
 @jit(nopython=True)
@@ -498,18 +520,7 @@ def contrast_filter(input, threshold, maxtree_p_s=None):
         raise ValueError("Image and max-tree doesn't match")
 
     # Compute contrast attribute
-    pixel_values = input.flatten()
-    contrast_attribute = np.full(input.size,
-                             fill_value=0,
-                             dtype=np.uint16)
-
-    # Everything except the first item, reversed
-    # > np.arange(8)[:0:-1]
-    # array([7, 6, 5, 4, 3, 2, 1])
-    for p in maxtree_p_s.S[:0:-1]:
-        q = maxtree_p_s.parent[p]
-        contrast_attribute[q] = max(contrast_attribute[q], pixel_values[p] - pixel_values[q] + contrast_attribute[p])
-        # print(contrast_attribute[q])
+    contrast_attribute = get_contrast_attribute(input, maxtree_p_s)
 
     # Apply Filter
     return direct_filter(maxtree_p_s, input, contrast_attribute, threshold)
