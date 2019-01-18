@@ -10,7 +10,7 @@
 
 ### Binary Partition Tree
 
-* [Binary Partition Tree as an Efficient Representation for Image Processing Segmentation and Information Retrieval](Binary_Partition_Tree_as_an_Efficient_Representation_for_Image_Processing_Segmentation_and_Information_Retrieval.pdf)
+* [Binary Partition Tree as an Efficient Representation for Image Processing Segmentation and Information Retrieval](EN_Binary_Partition_Tree_as_an_Efficient_Representation_for_Image_Processing_Segmentation_and_Information_Retrieval.pdf)
 
 
 ### Tree of shapes
