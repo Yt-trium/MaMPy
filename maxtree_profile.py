@@ -3,7 +3,7 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 from utils import image_read
-from maxtree import maxtree_berger, maxtree_berger_rank, maxtree_union_find_level_compression, compute_attribute_area, direct_filter
+from max_tree import maxtree_berger, maxtree_berger_rank, maxtree_union_find_level_compression, compute_attribute_area, direct_filter
 
 file_path = sys.argv[1]
 area_filter = int(sys.argv[2])

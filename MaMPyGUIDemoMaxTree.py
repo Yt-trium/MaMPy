@@ -22,7 +22,7 @@ from PyQt5 import QtCore
 # Utilities
 from utils import image_read
 # Max-Tree Berger
-from maxtree import maxtree, area_filter, contrast_filter
+from max_tree import maxtree, area_filter, contrast_filter
 
 
 class MaMPyGUIDemoMaxTree(QMainWindow):

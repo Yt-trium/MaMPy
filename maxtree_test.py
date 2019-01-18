@@ -1,4 +1,4 @@
-import maxtree as mtlib
+import max_tree as mtlib
 import numpy as np
 import math
 import unittest

@@ -478,7 +478,7 @@ def contrast_filter(input, threshold, maxtree_p_s=None):
 image_input = image_read("examples/images/circuit_small.png")
 # image_input = image_input / image_input.max()
 # image_output = area_filter(image_input, 500)
-image_output = contrast_filter(image_input, 1)
+image_output = contrast_filter(image_input, 30)
 
 import matplotlib.pyplot as plt
 plt.imshow(image_input, cmap="gray")
