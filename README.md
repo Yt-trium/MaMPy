@@ -19,7 +19,16 @@ Mathematical Morphology Python Library
 ## Documentation Utilisateur
 
 Avant de commencer, il est nécessaire d'installer les dépendances (voir requirements.txt). Il est fortement conseillé
-d'utiliser en environnement python virtuel (venv par exemple).
+d'utiliser en environnement python virtuel.  
+Exemple venv :
+```
+# create venv
+python -m venv venv
+# activate venv
+source venv/bin/activate
+# install requirements
+pip install -r requirements.txt
+```
 
 * Lancer MaMPyGUIDemoMaxTree avec python3 :
 ```
