@@ -14,6 +14,40 @@ C. Meyer
 import numpy as np
 from enum import Enum
 
+def addBorderMedian(input):
+    '''
+    :param input: numpy 2d array of a single channel image
+    :return: numpy 2d array of the same image with a border equal to the median of the original border.
+    '''
+
+    # check input validity
+    assert type(input) == np.ndarray
+    assert input.ndim == 2
+
+    # create output
+    output = np.zeros(tuple([x + 2 for x in input.shape]), dtype=input.dtype)
+
+    border = np.zeros(2*input.shape[0] + 2*input.shape[1] - 4, dtype=input.dtype)
+    b = 0
+
+    for x in range(input.shape[0]):
+        for y in range(input.shape[1]):
+            if(x == 0 or x == input.shape[0]-1 or y == 0 or y == input.shape[1]-1):
+                border[b] = input[x][y]
+                b += 1
+
+    med = np.median(border)
+
+    for x in range(output.shape[0]):
+        for y in range(output.shape[1]):
+            if(x == 0 or x == output.shape[0]-1 or y == 0 or y == output.shape[1]-1):
+                output[x][y] = med
+            else:
+                output[x][y] = input[x-1][y-1]
+
+    return output
+
+
 InterpolationMode = Enum('InterpolationMode', 'MAX MIN MED')
 
 def interpolate2D(input, interpolationMode):
@@ -59,12 +93,20 @@ def interpolate2D(input, interpolationMode):
     return output
 
 def immersion2D(input):
+    '''
+    :param input: numpy 2d array of a single channel image
+    :return: numpy 2d array of the immersed image
+    '''
+
+    
     return 0
 
-# interpolation + immersion
-# 1. add median outside
-# 2. interpolate
-# 3. immerse
+print(immersion2D(np.array([[1, 2], [3, 4]])))
 
-print(interpolate2D(np.array([[1, 2], [3, 4]]), InterpolationMode.MAX))
-
+def interpolate_and_immerse_2D(imput, interpolationMode):
+    '''
+    :param input: numpy 2d array of a single channel image
+    :param interpolationMode: the interpolation mode (max, min or median)
+    :return: numpy 2d array of the Khalimsky grid
+    '''
+    return immersion2D(interpolate2D(addBorderMedian(input)))
