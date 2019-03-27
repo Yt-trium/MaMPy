@@ -15,6 +15,7 @@
 
 ### Tree of shapes
 
+* [Un algorithme de complexité linéaire pour le calcul de l’arbre des formes](FR_Un_algorithme_de_complexite_lineaire_pour_le_calcul_de_l_arbre_des_formes.pdf)
 * [A quasi-linear algorithm to compute the tree of shapes of n-D images](EN_A_quasi-linear_algorithm_to_compute_the_tree_of_shapes.pdf)
 * [Remote Sensing Image Classification Using Attribute Filters Defined Over the Tree of Shapes](EN_Remote_Sensing_Image_Classification_Using_Attribute_Filters_Defined_Over_the_Tree_of_Shapes.pdf)
 
