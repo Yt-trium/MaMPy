@@ -154,15 +154,39 @@ def priorityPush(q, h, U, l):
         lower = U[h[0]][h[1]]
         upper = U[h[0]][h[1]]
 
-    return
+    if(lower > l):
+        l_ = lower
+    elif(upper < l):
+        l_ = upper
+    else:
+        l_ = l
+
+    q[l_].append(h)
 
 
 def priorityPop(q, l):
     # empty queue
+    local_l = l
+    l_ = -1
     if len(q[l]) == 0:
-        # need to understand article...
-        return
-    return q[l].pop()
+        for i in range(1, max(l, 255-l)):
+            if len(q[l-i]) > 0:
+                l_ = l-i
+                break
+            elif len(q[l+i]) > 0:
+                l_ = l+i
+                break
+
+        local_l = l_
+
+    return q[local_l].popleft()
+
+
+def q_empty(hierarchical_queue):
+    for i in range(0, 255):
+        if len(hierarchical_queue[i]) > 0:
+            return False
+    return True
 
 
 def sort(input):
@@ -173,13 +197,21 @@ def sort(input):
     deja_vu = np.ndarray(input.shape, dtype=bool)
     deja_vu.fill(False)
 
+    # Create queue
     hierarchical_queue = np.ndarray((255), dtype=object)
     for i in range(0, 255):
         hierarchical_queue[i] = deque()
 
-    hierarchical_queue[input[0][0]].append((0, 0))
     i = 0
+
+    hierarchical_queue[input[0][0]].append((0, 0))
     deja_vu[0][0] = True
+
+    l = (0, 0)
+
+    while not q_empty(hierarchical_queue):
+        return
+
 
     return
 
