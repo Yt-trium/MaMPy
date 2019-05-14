@@ -9,8 +9,15 @@ Reference:
 
 Authors:
 C. Meyer
+
+Preconditions:
+Images are 2d single 8-bit channel arrays.
+
+Todo:
+Work with 3d images too.
 """
 
+from collections import deque
 import numpy as np
 from enum import Enum
 
@@ -128,17 +135,58 @@ def immersion2D(input):
 
     return output
 
-print(addBorderMedian(np.array([[1, 2], [3, 4]])))
-print((np.array([[1, 2], [3, 4]])))
-print(interpolate2D(np.array([[1, 2], [3, 4]]), InterpolationMode.MAX))
-print(immersion2D(interpolate2D(np.array([[1, 2], [3, 4]]), InterpolationMode.MAX)))
 
-
-def interpolate_and_immerse_2D(imput, interpolationMode):
+def interpolateAndImmerse2D(input, interpolationMode):
     '''
     :param input: numpy 2d array of a single channel image
     :param interpolationMode: the interpolation mode (max, min or median)
     :return: numpy 2d array of the Khalimsky grid
     '''
 
-    return immersion2D(interpolate2D(addBorderMedian(input)))
+    return immersion2D(interpolate2D(addBorderMedian(input), interpolationMode))
+
+
+def priorityPush(q, h, U, l):
+    if(type(U[h]) == tuple):
+        lower = U[h[0]][h[1]][0]
+        upper = U[h[0]][h[1]][1]
+    else:
+        lower = U[h[0]][h[1]]
+        upper = U[h[0]][h[1]]
+
+    return
+
+
+def priorityPop(q, l):
+    # empty queue
+    if len(q[l]) == 0:
+        # need to understand article...
+        return
+    return q[l].pop()
+
+
+def sort(input):
+    '''
+    :param input: numpy 2d array of a single 8-bit channel image
+    :return:
+    '''
+    deja_vu = np.ndarray(input.shape, dtype=bool)
+    deja_vu.fill(False)
+
+    hierarchical_queue = np.ndarray((255), dtype=object)
+    for i in range(0, 255):
+        hierarchical_queue[i] = deque()
+
+    hierarchical_queue[input[0][0]].append((0, 0))
+    i = 0
+    deja_vu[0][0] = True
+
+    return
+
+test = immersion2D(interpolate2D(np.array([[1, 2], [3, 4]]), InterpolationMode.MAX))
+
+print(test)
+
+sort(test)
+
+# print(interpolateAndImmerse2D(np.array([[1, 2], [3, 4]]), InterpolationMode.MAX))
