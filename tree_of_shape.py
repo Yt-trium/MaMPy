@@ -147,16 +147,16 @@ def interpolateAndImmerse2D(input, interpolationMode):
 
 
 def priorityPush(q, h, U, l):
-    if(type(U[h[0]][h[1]]) == tuple):
-        lower = U[h[0]][h[1]][0]
-        upper = U[h[0]][h[1]][1]
+    if type(U[h]) == tuple:
+        lower = U[h][0]
+        upper = U[h][1]
     else:
-        lower = U[h[0]][h[1]]
-        upper = U[h[0]][h[1]]
+        lower = U[h]
+        upper = U[h]
 
-    if(lower > l):
+    if lower > l:
         l_ = lower
-    elif(upper < l):
+    elif upper < l:
         l_ = upper
     else:
         l_ = l
@@ -188,49 +188,62 @@ def q_empty(hierarchical_queue):
             return False
     return True
 
+
+import max_tree
+
+
 def sort(input):
     '''
     :param input: numpy 2d array of a single 8-bit channel image
     :return:
     '''
-    u = np.ndarray(input.shape, dtype=input.dtype)
-    r = np.ndarray(255, dtype=object)
+    input_flat = input.flatten()
+    resolution = input_flat.size
 
+    u = np.ndarray(resolution, dtype=input.dtype)
+    r = np.ndarray(resolution, dtype=input.dtype)
 
-    deja_vu = np.ndarray(input.shape, dtype=bool)
+    deja_vu = np.ndarray(resolution, dtype=bool)
     deja_vu.fill(False)
 
     # Create queue
-    hierarchical_queue = np.ndarray(255, dtype=object)
-    for i in range(0, 255):
+    hierarchical_queue = np.ndarray(256, dtype=object)
+    for i in range(0, 256):
         hierarchical_queue[i] = deque()
 
     i = 0
 
-    hierarchical_queue[input[0][0]].append((0, 0))
-    deja_vu[0][0] = True
+    hierarchical_queue[input_flat[0]].append(0)
+    deja_vu[0] = True
 
-    l = input[0][0]
+    level = input_flat[0]
 
     while not q_empty(hierarchical_queue):
-        h = priorityPop(hierarchical_queue, l)
-        u[h[0]][h[1]] = l
+        h = priorityPop(hierarchical_queue, level)
+        u[h] = level
         r[i] = h
 
-        # check all neighbor
-        if(h[0] > 0 and h[1] > 0 and h[0] < input.shape[0] and h[1] < input.shape[1]):
-            if not deja_vu[h[0]][h[1]]:
-                # need to define n
-                priorityPush(hierarchical_queue, n, u, l)
+        neighbors = max_tree.get_neighbors_2d(4, input.shape, h, input.size)
+        neighbors = [n for n in neighbors if not deja_vu[n]]
+
+        for n in neighbors:
+            priorityPush(hierarchical_queue, n, input_flat, level)
+            deja_vu[n] = True
 
         i = i + 1
 
-    return (r, u)
+    return r.reshape(input.shape), u.reshape(input.shape)
 
-test = immersion2D(interpolate2D(np.array([[1, 2], [3, 4]]), InterpolationMode.MAX))
 
-print(test)
+def main():
+    test = immersion2D(interpolate2D(np.array([[1, 2], [3, 4]]), InterpolationMode.MAX))
 
-sort(test)
+    print(test)
 
-# print(interpolateAndImmerse2D(np.array([[1, 2], [3, 4]]), InterpolationMode.MAX))
+    print(sort(test))
+
+    # print(interpolateAndImmerse2D(np.array([[1, 2], [3, 4]]), InterpolationMode.MAX))
+
+
+if __name__ == "__main__":
+    main()
