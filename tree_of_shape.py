@@ -179,7 +179,7 @@ def priorityPop(q, l):
 
         local_l = l_
 
-    return q[local_l].popleft()
+    return q[local_l].popleft(), local_l
 
 
 def q_empty(hierarchical_queue):
@@ -200,8 +200,8 @@ def sort(input):
     input_flat = input.flatten()
     resolution = input_flat.size
 
-    u = np.ndarray(resolution, dtype=input.dtype)
-    r = np.ndarray(resolution, dtype=input.dtype)
+    u = np.ndarray(resolution, dtype=int)
+    r = np.ndarray(resolution, dtype=int)
 
     deja_vu = np.ndarray(resolution, dtype=bool)
     deja_vu.fill(False)
@@ -219,7 +219,7 @@ def sort(input):
     level = input_flat[0]
 
     while not q_empty(hierarchical_queue):
-        h = priorityPop(hierarchical_queue, level)
+        h, level = priorityPop(hierarchical_queue, level)
         u[h] = level
         r[i] = h
 
@@ -232,15 +232,84 @@ def sort(input):
 
         i = i + 1
 
-    return r.reshape(input.shape), u.reshape(input.shape)
+    return r, u.reshape(input.shape)
+
+
+def unionFind(R):
+    return
+
+
+def test_union_find_canonization(input, R):
+    input_flat = input.flatten()
+    resolution = input_flat.size
+
+    # Unique value telling if a pixel is defined in the max tree or not.
+    undefined_node = resolution + 2
+
+    # We generate an extra vector of pixels that order nodes downard.
+    # This vector allow to traverse the tree both upward and downard
+    # without having to sort childrens of each node.
+    # Initially, we sort pixel by increasing value and add indices in it.
+    sorted_pixels = R
+
+    # We store in the parent node of each pixel in an image.
+    # To do so we use the index of the pixel (x + y * width).
+    parents = np.full(
+        resolution,
+        fill_value=undefined_node,
+        dtype=np.uint32)
+
+    # zparents make root finding much faster.
+    zparents = parents.copy()
+
+    j = resolution - 1
+
+    # We go through sorted pixels in the reverse order.
+    for pi in sorted_pixels[::-1]:
+        # Make a node.
+        # By default, a pixel is its own parent.
+        parents[pi] = pi
+        zparents[pi] = pi
+
+        zp = pi
+        neighbors = max_tree.get_neighbors_2d(4, input.shape, pi, input.size)
+
+        # Filter neighbors.
+        neighbors = [n for n in neighbors if parents[n] != undefined_node]
+
+        # Go through neighbors.
+        for nei_pi in neighbors:
+            zn = max_tree.find_pixel_parent(zparents, nei_pi)
+
+            if zn != zp:
+                if input_flat[zp] == input_flat[zn]:
+                    zp, zn = zn, zp
+
+                # Merge sets.
+                zparents[zn] = zp
+                parents[zn] = zp
+
+                sorted_pixels[j] = zn
+                j -= 1
+
+    max_tree.canonize(input_flat, parents, sorted_pixels)
+
+    return max_tree.MaxTreeStructure(parents, sorted_pixels)
 
 
 def main():
     test = immersion2D(interpolate2D(np.array([[1, 2], [3, 4]]), InterpolationMode.MAX))
+    # test = immersion2D(interpolate2D(np.array([[1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]), InterpolationMode.MAX))
 
     print(test)
 
-    print(sort(test))
+    R, u = sort(test)
+
+    print(R)
+    print(u)
+    toto = test_union_find_canonization(u, R)
+
+    print(toto)
 
     # print(interpolateAndImmerse2D(np.array([[1, 2], [3, 4]]), InterpolationMode.MAX))
 
