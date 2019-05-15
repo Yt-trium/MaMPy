@@ -475,15 +475,20 @@ def contrast_filter(input, threshold, maxtree_p_s=None):
     return direct_filter(maxtree_p_s, input, contrast_attribute, threshold)
 
 
-image_input = image_read("examples/images/circuit_small.png")
-# image_input = image_input / image_input.max()
-# image_output = area_filter(image_input, 500)
-image_output = contrast_filter(image_input, 30)
+def main():
+    image_input = image_read("examples/images/circuit_small.png")
+    # image_input = image_input / image_input.max()
+    # image_output = area_filter(image_input, 500)
+    image_output = contrast_filter(image_input, 30)
 
-import matplotlib.pyplot as plt
-plt.imshow(image_input, cmap="gray")
-plt.show()
-plt.imshow(image_output, cmap="gray")
-plt.show()
+    import matplotlib.pyplot as plt
+    plt.imshow(image_input, cmap="gray")
+    plt.show()
+    plt.imshow(image_output, cmap="gray")
+    plt.show()
 
-print(image_input.max(), image_input.min(), image_input.max() - image_input.min())
+    print(image_input.max(), image_input.min(), image_input.max() - image_input.min())
+
+
+if __name__ == "__main__":
+    main()
