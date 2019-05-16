@@ -21,6 +21,10 @@ from collections import deque
 import numpy as np
 from enum import Enum
 
+# MaMPy includes
+# Utilities
+from utils import image_read
+
 def addBorderMedian(input):
     '''
     :param input: numpy 2d array of a single channel image
@@ -250,7 +254,7 @@ def test_union_find_canonization(input, R):
     # This vector allow to traverse the tree both upward and downard
     # without having to sort childrens of each node.
     # Initially, we sort pixel by increasing value and add indices in it.
-    sorted_pixels = R
+    sorted_pixels = np.copy(R)
 
     # We store in the parent node of each pixel in an image.
     # To do so we use the index of the pixel (x + y * width).
@@ -294,24 +298,33 @@ def test_union_find_canonization(input, R):
 
     max_tree.canonize(input_flat, parents, sorted_pixels)
 
-    return max_tree.MaxTreeStructure(parents, sorted_pixels)
+    return parents
 
+
+def uninterpolate2D(R, parents, shape):
+    assert len(parents) == len(R)
+    assert len(R) == shape[0]*shape[1]
+
+    uninterpolatedR = np.array(shape[0]*shape[1])
+    uninterpolatedP = np.array(shape[0]*shape[1])
+
+    # remove immerse and interpolate
+    for i in range(0, len(R)):
+        return
+
+    # remove median border
+
+    return uninterpolatedR, uninterpolatedP
 
 def main():
-    test = immersion2D(interpolate2D(np.array([[1, 2], [3, 4]]), InterpolationMode.MAX))
+    test = interpolateAndImmerse2D(np.array([[1, 2], [3, 4]]), InterpolationMode.MAX)
     # test = immersion2D(interpolate2D(np.array([[1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]), InterpolationMode.MAX))
 
-    print(test)
-
     R, u = sort(test)
+    parents = test_union_find_canonization(u, R)
 
-    print(R)
-    print(u)
-    toto = test_union_find_canonization(u, R)
+    print(uninterpolate2D(R, parents, (4, 4)))
 
-    print(toto)
-
-    # print(interpolateAndImmerse2D(np.array([[1, 2], [3, 4]]), InterpolationMode.MAX))
 
 
 if __name__ == "__main__":
