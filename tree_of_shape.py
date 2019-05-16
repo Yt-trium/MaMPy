@@ -301,20 +301,61 @@ def test_union_find_canonization(input, R):
     return parents
 
 
+def is_in_image(p, rowsize):
+    row = p // rowsize
+    col = p - row*rowsize
+    if row % 4 == 0 and col % 4 == 0:
+        return True
+    return False
+
+
 def uninterpolate2D(R, parents, shape):
     assert len(parents) == len(R)
-    assert len(R) == shape[0]*shape[1]
 
-    uninterpolatedR = np.array(shape[0]*shape[1])
-    uninterpolatedP = np.array(shape[0]*shape[1])
+    rowsize = (shape[0] * 2 - 1) * 2 - 1
+    uninterpolatedR = np.zeros(shape[0]*shape[1], dtype=int)
+    uninterpolatedP = np.zeros(shape[0]*shape[1], dtype=int)
+    i = 0
+    j = 0
 
     # remove immerse and interpolate
     for i in range(0, len(R)):
-        return
+        p = R[i]
+        if is_in_image(p, rowsize):
+            q = parents[p]
+            if is_in_image(q, rowsize) and p == q:
+                tmp = parents[q]
+                parents[p] = tmp
+
+                if parents[q] == q and not is_in_image(parents[q], rowsize):
+                    parents[p] = p
+                parents[q] = p
+
+                if parents[tmp] == tmp:
+                    parents[p] = parents[tmp]
+
+    j = 0
+    for i in range(0, len(R)):
+        p = R[i]
+        if is_in_image(p, rowsize):
+            row = p // rowsize
+            col = p - row*rowsize
+            p_ = (row/4 * shape[0]) + col/4
+            uninterpolatedR[j] = p_
+
+            p = parents[p]
+            row = p // rowsize
+            col = p - row*rowsize
+            p_ = (row/4 * shape[0]) + col/4
+            uninterpolatedP[j] = p_
+
+            j = j + 1
 
     # remove median border
 
-    return uninterpolatedR, uninterpolatedP
+
+    return uninterpolatedP, uninterpolatedR
+
 
 def main():
     test = interpolateAndImmerse2D(np.array([[1, 2], [3, 4]]), InterpolationMode.MAX)
@@ -325,7 +366,8 @@ def main():
 
     print(uninterpolate2D(R, parents, (4, 4)))
 
-
+    maxtree_p_s = max_tree.maxtree(addBorderMedian(np.array([[1, 2], [3, 4]])))
+    print(maxtree_p_s)
 
 if __name__ == "__main__":
     main()
