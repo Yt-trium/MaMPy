@@ -19,11 +19,13 @@ Work with 3d images too.
 
 from collections import deque
 import numpy as np
+from numba import jit
 from enum import Enum
 
 # MaMPy includes
 # Utilities
 from utils import image_read
+
 
 def addBorderMedian(input):
     '''
@@ -32,11 +34,11 @@ def addBorderMedian(input):
     '''
 
     # check input validity
-    assert type(input) == np.ndarray
+    # assert type(input) == np.ndarray
     assert input.ndim == 2
 
     # create output
-    output = np.zeros(tuple([x + 2 for x in input.shape]), dtype=input.dtype)
+    output = np.zeros((2 + input.shape[0], 2 + input.shape[1]), dtype=input.dtype)
 
     border = np.zeros(2*input.shape[0] + 2*input.shape[1] - 4, dtype=input.dtype)
     b = 0
@@ -60,6 +62,7 @@ def addBorderMedian(input):
 
 
 InterpolationMode = Enum('InterpolationMode', 'MAX MIN MED')
+
 
 def interpolate2D(input, interpolationMode):
     """
@@ -103,6 +106,7 @@ def interpolate2D(input, interpolationMode):
 
     return output
 
+
 def immersion2D(input):
     '''
     :param input: numpy 2d array of a single channel image
@@ -114,7 +118,7 @@ def immersion2D(input):
     assert input.ndim == 2
 
     # create output
-    output = np.zeros(tuple([2 * x - 1 for x in input.shape]), dtype=object)
+    output = np.zeros((2 * input.shape[0] - 1, 2 * input.shape[1] - 1), dtype=object)
 
     for x in range(input.shape[0]):
         for y in range(input.shape[1]):
@@ -173,21 +177,21 @@ def priorityPop(q, l):
     local_l = l
     l_ = -1
     if len(q[l]) == 0:
-        for i in range(1, max(l, 255-l)):
-            if len(q[l-i]) > 0:
+        for i in range(0, max(l, 256-l)):
+            if l-i >= 0 and len(q[l-i]) > 0:
                 l_ = l-i
-                break
-            elif len(q[l+i]) > 0:
+                local_l = l_
+                return q[local_l].popleft(), local_l
+            elif l+i < 256 and len(q[l+i]) > 0:
                 l_ = l+i
-                break
-
-        local_l = l_
+                local_l = l_
+                return q[local_l].popleft(), local_l
 
     return q[local_l].popleft(), local_l
 
 
 def q_empty(hierarchical_queue):
-    for i in range(0, 255):
+    for i in range(0, 256):
         if len(hierarchical_queue[i]) > 0:
             return False
     return True
@@ -204,8 +208,8 @@ def sort(input):
     input_flat = input.flatten()
     resolution = input_flat.size
 
-    u = np.ndarray(resolution, dtype=int)
-    r = np.ndarray(resolution, dtype=int)
+    u = np.ndarray(resolution, dtype='uint64')
+    r = np.ndarray(resolution, dtype='uint64')
 
     deja_vu = np.ndarray(resolution, dtype=bool)
     deja_vu.fill(False)
@@ -226,6 +230,7 @@ def sort(input):
         h, level = priorityPop(hierarchical_queue, level)
         u[h] = level
         r[i] = h
+        i = i + 1
 
         neighbors = max_tree.get_neighbors_2d(4, input.shape, h, input.size)
         neighbors = [n for n in neighbors if not deja_vu[n]]
@@ -234,15 +239,10 @@ def sort(input):
             priorityPush(hierarchical_queue, n, input_flat, level)
             deja_vu[n] = True
 
-        i = i + 1
-
     return r, u.reshape(input.shape)
 
 
-def unionFind(R):
-    return
-
-
+@jit(nopython=True)
 def test_union_find_canonization(input, R):
     input_flat = input.flatten()
     resolution = input_flat.size
@@ -301,6 +301,7 @@ def test_union_find_canonization(input, R):
     return parents
 
 
+@jit(nopython=True)
 def is_in_image(p, rowsize):
     row = p // rowsize
     col = p - row*rowsize
@@ -312,9 +313,9 @@ def is_in_image(p, rowsize):
 def uninterpolate2D(R, parents, shape):
     assert len(parents) == len(R)
 
-    rowsize = (shape[0] * 2 - 1) * 2 - 1
-    uninterpolatedR = np.zeros(shape[0]*shape[1], dtype=int)
-    uninterpolatedP = np.zeros(shape[0]*shape[1], dtype=int)
+    rowsize = ((shape[0] + 2) * 2 - 1) * 2 - 1
+    uninterpolatedR = np.zeros((shape[0] + 2)*(shape[1] + 2), dtype=int)
+    uninterpolatedP = np.zeros((shape[0] + 2)*(shape[1] + 2), dtype=int)
     i = 0
     j = 0
 
@@ -340,21 +341,98 @@ def uninterpolate2D(R, parents, shape):
         if is_in_image(p, rowsize):
             row = p // rowsize
             col = p - row*rowsize
-            p_ = (row/4 * shape[0]) + col/4
+            p_ = (row/4 * (shape[0] + 2)) + col/4
             uninterpolatedR[j] = p_
 
             p = parents[p]
             row = p // rowsize
             col = p - row*rowsize
-            p_ = (row/4 * shape[0]) + col/4
+            p_ = (row/4 * (shape[0] + 2)) + col/4
             uninterpolatedP[j] = p_
 
             j = j + 1
 
     # remove median border
 
-
     return uninterpolatedP, uninterpolatedR
+
+
+@jit(nopython=True)
+def get_area_attribute(input, par, s):
+    # Compute area attribute
+    area_attribute = np.full(input.size,
+                             fill_value=1,
+                             dtype=np.uint32)
+
+    # Everything except the first item, reversed
+    # > np.arange(8)[:0:-1]
+    # array([7, 6, 5, 4, 3, 2, 1])
+    for p in s[:0:-1]:
+        q = par[p]
+        area_attribute[q] += area_attribute[p]
+
+    return area_attribute
+
+
+@jit(nopython=True)
+def direct_filter(par, s, input, attribute, λ):
+    """
+    The parameters order follows the order given in the article [1]
+    :param maxtree_p_s: the maxtree of the image (parent and S vector pair)
+    :param input: numpy ndarray of a single channel image
+    :param attribute: the attribute associated with the maxtree
+    :param λ: attribute threashold
+    :return: the filtered image
+    """
+
+    ima = input.flatten()
+
+    out = np.full(
+        ima.shape,
+        fill_value=0,
+        dtype=input.dtype)
+
+    proot = s[0]
+
+    if attribute[proot] < λ:
+        out[proot] = 0
+    else:
+        out[proot] = ima[proot]
+
+    for p in s:
+        q = par[p]
+
+        if ima[q] == ima[p]:
+            out[p] = out[q]     # p not canonical
+        elif attribute[p] < λ:
+            out[p] = out[q]     # Criterion failed
+        else:
+            out[p] = ima[p]     # Criterion pass
+
+    return out.reshape(input.shape)
+
+
+def area_filter(input, threshold):
+    """
+    :param input: numpy ndarray of a single channel image
+    :param threshold: threshold of the filter (minimum area to keep)
+    :param maxtree_p_s: the maxtree of the image (parent and S vector pair)
+    :return: numpy ndarray of the image
+    """
+
+    data0 = addBorderMedian(input)
+    data1 = interpolate2D(data0, InterpolationMode.MAX)
+    data2 = immersion2D(data1)
+
+    R, u = sort(data2)
+    parents = test_union_find_canonization(u, R)
+    p, r = uninterpolate2D(R, parents, data0.shape)
+
+    # Compute area attribute
+    area_attribute = get_area_attribute(data0, p, r)
+
+    # Apply Filter
+    return direct_filter(p, r, data0, area_attribute, threshold)
 
 
 def main():
@@ -363,6 +441,8 @@ def main():
 
     R, u = sort(test)
     parents = test_union_find_canonization(u, R)
+
+    print(R, u)
 
     print(uninterpolate2D(R, parents, (4, 4)))
 
